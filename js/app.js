@@ -30,10 +30,6 @@ window.addEventListener("scroll", () => {
   navEl.classList.toggle("is-scrolled", window.scrollY > 12);
 }, { passive: true });
 
-function toggleMobileNav(){
-  document.getElementById("mobileNav")?.classList.toggle("is-open");
-}
-
 /* ---------- 2b. BACK TO TOP ---------- */
 function scrollToTop(){
   window.scrollTo({ top:0, behavior:"smooth" });
@@ -79,7 +75,6 @@ document.addEventListener("click", (e) => {
   e.preventDefault();
   const y = target.getBoundingClientRect().top + window.scrollY - (document.getElementById("mainNav")?.offsetHeight || 76) + 1;
   window.scrollTo({ top: y, behavior: "smooth" });
-  document.getElementById("mobileNav")?.classList.remove("is-open");
 });
 
 /* ---------- 5. TOAST NOTIFICATIONS ---------- */
@@ -170,7 +165,7 @@ function loadAdminPanel(key){
   document.getElementById("adminTopbarTitle").textContent = ADMIN_PANELS[key]?.title || "";
   const content = document.getElementById("adminContent");
   content.innerHTML = '<div class="skeleton" style="height:220px;"></div>';
-  document.getElementById("adminSidebar")?.classList.remove("is-open");
+  closeAdminSidebar();
   ADMIN_PANELS[key]?.render(content);
 }
 
@@ -179,9 +174,24 @@ document.addEventListener("click", (e) => {
   if (link) loadAdminPanel(link.dataset.panel);
 });
 
-function toggleAdminSidebar(){
-  document.getElementById("adminSidebar")?.classList.toggle("is-open");
+function openAdminSidebar(){
+  document.getElementById("adminSidebar")?.classList.add("is-open");
+  document.getElementById("adminSidebarBackdrop")?.classList.add("show");
+  document.body.classList.add("admin-sidebar-locked");
 }
+function closeAdminSidebar(){
+  document.getElementById("adminSidebar")?.classList.remove("is-open");
+  document.getElementById("adminSidebarBackdrop")?.classList.remove("show");
+  document.body.classList.remove("admin-sidebar-locked");
+}
+function toggleAdminSidebar(){
+  const sidebar = document.getElementById("adminSidebar");
+  if (!sidebar) return;
+  sidebar.classList.contains("is-open") ? closeAdminSidebar() : openAdminSidebar();
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeAdminSidebar();
+});
 
 /* ---------- 9. HELPERS UMUM ---------- */
 const BULAN_ID = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -795,14 +805,15 @@ async function handleSaveSettings(e, data){
 async function loadLandingData(){
   try {
     const d = await RTApi.getLandingData();
-    setText("statWarga", d.statWarga); setText("statKK", d.statKK);
-    setText("statL", d.statL); setText("statP", d.statP);
+    if (!d) throw new Error("Respons kosong dari server.");
+    setText("statWarga", d.statWarga ?? 0); setText("statKK", d.statKK ?? 0);
+    setText("statL", d.statL ?? 0); setText("statP", d.statP ?? 0);
     setText("fcSaldo", fmtRupiah(d.saldoKas));
     setText("fpSaldo", fmtRupiah(d.saldoKas));
     setText("fpMasuk", fmtRupiah(d.totalMasuk));
     setText("fpKeluar", fmtRupiah(d.totalKeluar));
     const pct = d.iuranTotalKK ? Math.round((d.iuranSudahBayar / d.iuranTotalKK) * 100) : 0;
-    setText("fcIuran", `${d.iuranSudahBayar}/${d.iuranTotalKK} KK`);
+    setText("fcIuran", `${d.iuranSudahBayar||0}/${d.iuranTotalKK||0} KK`);
     setText("fpIuranPct", pct + "%");
     document.querySelector(".progress-track i") && (document.querySelector(".progress-track i").style.width = pct + "%");
 
@@ -825,7 +836,18 @@ async function loadLandingData(){
       <h3 style="margin-top:14px;">${p.judul}</h3><p>${(p.isi||'').slice(0,120)}</p></div>`).join("");
   } catch (err) {
     console.warn("Gagal memuat data landing page:", err.message);
+    showLandingDataError(err.message);
   }
+}
+function showLandingDataError(message){
+  if (document.getElementById("landingDataError")) return; // jangan dobel
+  const box = document.createElement("div");
+  box.id = "landingDataError";
+  box.style.cssText = "position:fixed; left:16px; bottom:16px; z-index:399; max-width:360px; background:var(--surface); border:1px solid var(--danger); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow); font-size:13px; color:var(--text);";
+  box.innerHTML = `<b style="color:var(--danger);">⚠️ Data beranda gagal dimuat</b>
+    <p style="margin-top:6px; color:var(--text-muted);">${message}</p>
+    <button onclick="this.closest('#landingDataError').remove()" style="margin-top:8px; background:none; border:none; color:var(--accent); font-weight:600; cursor:pointer; padding:0; font-size:12.5px;">Tutup</button>`;
+  document.body.appendChild(box);
 }
 function setText(id, val){ const el = document.getElementById(id); if (el) el.textContent = val; }
 
