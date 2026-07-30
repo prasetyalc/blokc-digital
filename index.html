@@ -46,34 +46,40 @@
     <div class="hero-pattern"></div>
     <div class="container">
       <div class="hero-copy reveal">
-        <span class="wilayah-tag">WILAYAH RT 03 / RW 05</span>
-        <h1 style="margin-top:20px;">Bersama Warga, <br>Membangun <em>Lingkungan</em><br>yang Nyaman &amp; Harmonis</h1>
-        <p class="hero-lead">Satu portal digital untuk komunikasi, transparansi keuangan kas, dan pelayanan administrasi warga RT03/RW05 — cepat, terbuka, dan mudah diakses kapan saja.</p>
+        <span class="wilayah-tag" id="heroWilayahTag"><span class="skeleton" style="width:150px; height:13px; display:inline-block; vertical-align:middle;"></span></span>
+        <h1 style="margin-top:20px;" id="heroTitle">
+          <span class="skeleton" style="width:92%; height:1.15em; display:block; margin-bottom:10px; border-radius:6px;"></span>
+          <span class="skeleton" style="width:78%; height:1.15em; display:block; border-radius:6px;"></span>
+        </h1>
+        <p class="hero-lead" id="heroLead">
+          <span class="skeleton" style="width:100%; height:14px; display:block; margin-bottom:8px; border-radius:5px;"></span>
+          <span class="skeleton" style="width:65%; height:14px; display:block; border-radius:5px;"></span>
+        </p>
         <div class="hero-cta">
           <a href="#section-pengumuman" class="btn btn-primary">Lihat Pengumuman</a>
           <a href="#section-layanan" class="btn btn-outline">Ajukan Layanan</a>
         </div>
         <div class="hero-stats">
-          <div class="stat-chip"><b id="statWarga">0</b><span>Total Warga (Jiwa)</span></div>
-          <div class="stat-chip"><b id="statKK">0</b><span>Kepala Keluarga</span></div>
-          <div class="stat-chip"><b id="statL">0</b><span>Laki-laki</span></div>
-          <div class="stat-chip"><b id="statP">0</b><span>Perempuan</span></div>
+          <div class="stat-chip"><b id="statWarga"><span class="skeleton" style="width:28px;height:1em;display:inline-block;"></span></b><span>Total Warga (Jiwa)</span></div>
+          <div class="stat-chip"><b id="statKK"><span class="skeleton" style="width:28px;height:1em;display:inline-block;"></span></b><span>Kepala Keluarga</span></div>
+          <div class="stat-chip"><b id="statL"><span class="skeleton" style="width:28px;height:1em;display:inline-block;"></span></b><span>Laki-laki</span></div>
+          <div class="stat-chip"><b id="statP"><span class="skeleton" style="width:28px;height:1em;display:inline-block;"></span></b><span>Perempuan</span></div>
         </div>
       </div>
       <div class="hero-visual reveal" style="transition-delay:.15s;">
         <div class="float-card card-01">
           <div class="fc-label">Saldo Kas RT/RW</div>
-          <div class="fc-value" id="fcSaldo">Rp 0</div>
-          <div class="fc-bar"><i style="width:62%"></i></div>
+          <div class="fc-value" id="fcSaldo"><span class="skeleton" style="width:90px;height:1em;display:inline-block;"></span></div>
+          <div class="fc-bar"><i id="fcSaldoBar" style="width:0%"></i></div>
         </div>
         <div class="float-card card-02">
           <div class="fc-label">Status Iuran Bulan Ini</div>
-          <div class="fc-value" id="fcIuran">0/0 KK</div>
-          <div class="fc-bar"><i style="width:0%"></i></div>
+          <div class="fc-value" id="fcIuran"><span class="skeleton" style="width:60px;height:1em;display:inline-block;"></span></div>
+          <div class="fc-bar"><i id="fcIuranBar" style="width:0%"></i></div>
         </div>
         <div class="float-card card-03">
           <div class="fc-label">Agenda Terdekat</div>
-          <div class="fc-value" style="font-size:16px;" id="fcAgenda">Belum ada agenda</div>
+          <div class="fc-value" style="font-size:16px;" id="fcAgenda"><span class="skeleton" style="width:120px;height:1em;display:inline-block;"></span></div>
         </div>
       </div>
     </div>
