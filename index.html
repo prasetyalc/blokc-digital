@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RT03RW05 DIGITAL — Sistem Informasi & Keuangan Warga</title>
+<meta name="description" content="Platform digital RT03/RW05: informasi warga, transparansi keuangan kas, agenda kegiatan, pengumuman, dan layanan warga dalam satu portal.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ================= PUBLIC SITE ================= -->
+<div id="publicSite">
+
+  <!-- NAV -->
+  <nav class="nav" id="mainNav">
+    <div class="container">
+      <a href="#landingPage" class="brand">
+        <span class="brand-mark">03·05</span>
+        <span>RT03RW05<br><small>DIGITAL</small></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#landingPage">Beranda</a></li>
+        <li><a href="#section-jadwal">Jadwal</a></li>
+        <li><a href="#section-pengumuman">Pengumuman</a></li>
+        <li><a href="#section-transparansi">Transparansi</a></li>
+        <li><a href="#section-layanan">Layanan</a></li>
+        <li><a href="#section-kontak">Kontak</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Ganti mode gelap/terang">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="openModal('loginModal')">🔐 Login Pengurus</button>
+        <button class="nav-burger" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
+      </div>
+    </div>
+  </nav>
+  <div class="mobile-nav" id="mobileNav">
+    <a href="#landingPage">Beranda</a>
+    <a href="#section-jadwal">Jadwal</a>
+    <a href="#section-pengumuman">Pengumuman</a>
+    <a href="#section-transparansi">Transparansi</a>
+    <a href="#section-layanan">Layanan</a>
+    <a href="#section-kontak">Kontak</a>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero" id="landingPage">
+    <div class="hero-pattern"></div>
+    <div class="container">
+      <div class="hero-copy reveal">
+        <span class="wilayah-tag">WILAYAH RT 03 / RW 05</span>
+        <h1 style="margin-top:20px;">Bersama Warga, <br>Membangun <em>Lingkungan</em><br>yang Nyaman &amp; Harmonis</h1>
+        <p class="hero-lead">Satu portal digital untuk komunikasi, transparansi keuangan kas, dan pelayanan administrasi warga RT03/RW05 — cepat, terbuka, dan mudah diakses kapan saja.</p>
+        <div class="hero-cta">
+          <a href="#section-pengumuman" class="btn btn-primary">Lihat Pengumuman</a>
+          <a href="#section-layanan" class="btn btn-outline">Ajukan Layanan</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-chip"><b id="statWarga">0</b><span>Total Warga (Jiwa)</span></div>
+          <div class="stat-chip"><b id="statKK">0</b><span>Kepala Keluarga</span></div>
+          <div class="stat-chip"><b id="statL">0</b><span>Laki-laki</span></div>
+          <div class="stat-chip"><b id="statP">0</b><span>Perempuan</span></div>
+        </div>
+      </div>
+      <div class="hero-visual reveal" style="transition-delay:.15s;">
+        <div class="float-card card-01">
+          <div class="fc-label">Saldo Kas RT/RW</div>
+          <div class="fc-value" id="fcSaldo">Rp 0</div>
+          <div class="fc-bar"><i style="width:62%"></i></div>
+        </div>
+        <div class="float-card card-02">
+          <div class="fc-label">Status Iuran Bulan Ini</div>
+          <div class="fc-value" id="fcIuran">0/0 KK</div>
+          <div class="fc-bar"><i style="width:0%"></i></div>
+        </div>
+        <div class="float-card card-03">
+          <div class="fc-label">Agenda Terdekat</div>
+          <div class="fc-value" style="font-size:16px;" id="fcAgenda">Belum ada agenda</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- LAYANAN CEPAT -->
+  <section class="section" id="section-layanan">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Layanan Cepat</span>
+        <h2>Semua Urusan Administrasi, Satu Klik Saja</h2>
+        <p>Ajukan permohonan tanpa perlu datang langsung ke sekretariat RT/RW. Status permohonan dapat dipantau langsung oleh pengurus.</p>
+      </div>
+      <div class="grid grid-3 reveal-stagger">
+        <div class="card service-card" onclick="openModal('modalSurat')">
+          <div class="icon-badge">📄</div>
+          <h3>Surat Pengantar</h3>
+          <p>Ajukan permohonan surat pengantar untuk berbagai keperluan administrasi kependudukan.</p>
+          <div class="go">Ajukan sekarang →</div>
+        </div>
+        <div class="card service-card" onclick="openModal('modalPinjam')">
+          <div class="icon-badge">📦</div>
+          <h3>Peminjaman Aset</h3>
+          <p>Pinjam inventaris milik warga seperti tenda, kursi, dan sound system untuk acara.</p>
+          <div class="go">Ajukan sekarang →</div>
+        </div>
+        <div class="card service-card" onclick="openModal('modalAdukan')">
+          <div class="icon-badge">📢</div>
+          <h3>Pengaduan &amp; Saran</h3>
+          <p>Sampaikan laporan keamanan, kebersihan, atau masukan untuk lingkungan yang lebih baik.</p>
+          <div class="go">Sampaikan sekarang →</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- JADWAL -->
+  <section class="section" id="section-jadwal" style="background:var(--bg-alt);">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Agenda Kegiatan</span>
+        <h2>Jadwal Kerja Bakti &amp; Rapat Warga</h2>
+      </div>
+      <div class="reveal-stagger" id="listJadwal">
+        <div class="list-row"><div class="list-date"><b>—</b><span>—</span></div><div class="list-body"><h4>Belum ada agenda terjadwal</h4><p>Agenda kegiatan akan tampil otomatis dari Google Sheets setelah backend terhubung.</p></div><span class="badge badge-muted">Menunggu</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PENGUMUMAN -->
+  <section class="section" id="section-pengumuman">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Informasi Warga</span>
+        <h2>Pengumuman &amp; Berita Terbaru</h2>
+      </div>
+      <div class="grid grid-3 reveal-stagger" id="listPengumuman">
+        <div class="card">
+          <span class="badge badge-info">Info</span>
+          <h3 style="margin-top:14px;">Belum ada pengumuman</h3>
+          <p>Pengumuman terbaru dari pengurus RT/RW akan tampil di sini.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRANSPARANSI KEUANGAN -->
+  <section class="section" id="section-transparansi" style="background:var(--bg-alt);">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Transparansi</span>
+        <h2>Keuangan &amp; Aset RT/RW Terbuka untuk Warga</h2>
+        <p>Laporan arus kas dan status inventaris diperbarui langsung dari catatan pengurus.</p>
+      </div>
+      <div class="finance-panel reveal">
+        <span class="eyebrow" style="color:#f0bc6a;">💰 Arus Kas &amp; Iuran Warga</span>
+        <div class="fp-grid">
+          <div class="fp-item"><b id="fpSaldo">Rp 0</b><span>Total Saldo Kas</span></div>
+          <div class="fp-item"><b id="fpMasuk">Rp 0</b><span>Total Pemasukan</span></div>
+          <div class="fp-item"><b id="fpKeluar">Rp 0</b><span>Total Pengeluaran</span></div>
+          <div class="fp-item"><b id="fpIuranPct">0%</b><span>Status Iuran Bulan Ini</span></div>
+        </div>
+        <div class="progress-track"><i style="width:0%"></i></div>
+      </div>
+
+      <div class="card reveal" style="margin-top:24px;">
+        <h3 style="margin-bottom:16px;">📦 Inventaris Aset RT/RW</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nama Barang</th><th>Total</th><th>Tersedia</th><th>Status</th></tr></thead>
+            <tbody id="tableAset"><tr><td colspan="4"><div class="empty-state">Belum ada data aset.</div></td></tr></tbody>
+          </table>
+        </div>
+        <p class="field-hint" style="margin-top:14px;">* Warga yang ingin meminjam aset dapat mengajukan melalui formulir "Peminjaman Aset" di menu Layanan Cepat.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KONTAK -->
+  <section class="section" id="section-kontak">
+    <div class="container">
+      <div class="card reveal" style="padding:44px; text-align:center; background:linear-gradient(155deg, var(--teal-900), var(--teal-700)); color:#fff; border:none;">
+        <h2 style="color:#fff; font-size:26px;">Ayo Berpartisipasi!</h2>
+        <p style="color:#dcebe6; max-width:480px; margin:14px auto 22px;">Sampaikan ide, kritik, dan saran Anda untuk kemajuan lingkungan RT03/RW05 bersama.</p>
+        <button class="btn" style="background:var(--gold-500); color:#16211f;" onclick="openModal('modalAdukan')">Sampaikan Sekarang</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div>
+        <div class="brand" style="margin-bottom:10px;"><span class="brand-mark">03·05</span><span>RT03RW05<br><small>DIGITAL</small></span></div>
+        <p style="color:var(--text-muted); font-size:13.5px; max-width:280px;">Platform informasi & keuangan warga RT 03 / RW 05.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#">Tentang Kami</a>
+        <a href="#">Kebijakan Privasi</a>
+        <a href="#">Syarat & Ketentuan</a>
+        <a href="#">Bantuan</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 RT03RW05 DIGITAL. Seluruh hak cipta dilindungi.</div>
+  </footer>
+</div>
+
+<!-- ================= LOGIN MODAL ================= -->
+<div class="overlay" id="loginModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>🔐 Login Pengurus</h3><p class="field-hint">Gunakan akun admin/staff terdaftar untuk masuk ke panel database.</p></div>
+      <button class="modal-close" onclick="closeModal('loginModal')">✕</button>
+    </div>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Username / Email</label><input type="text" name="username" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-primary btn-full">Masuk</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= PUBLIC SERVICE MODALS ================= -->
+<div class="overlay" id="modalSurat">
+  <div class="modal">
+    <div class="modal-head"><h3>📄 Permohonan Surat Pengantar</h3><button class="modal-close" onclick="closeModal('modalSurat')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Permohonan surat terkirim ke pengurus.'); closeModal('modalSurat');">
+      <div class="field"><label>Nama Lengkap</label><input required></div>
+      <div class="field-row">
+        <div class="field"><label>NIK Warga</label><input required></div>
+        <div class="field"><label>No. Rumah / Blok</label><input required></div>
+      </div>
+      <div class="field"><label>Nomor WhatsApp Aktif</label><input required></div>
+      <div class="field"><label>Keperluan Pembuatan Surat</label><textarea rows="3" required></textarea></div>
+      <button class="btn btn-primary btn-full">Kirim Permohonan</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalPinjam">
+  <div class="modal">
+    <div class="modal-head"><h3>📦 Peminjaman Aset RT</h3><button class="modal-close" onclick="closeModal('modalPinjam')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Permohonan peminjaman terkirim.'); closeModal('modalPinjam');">
+      <div class="field-row">
+        <div class="field"><label>Nama Peminjam</label><input required></div>
+        <div class="field"><label>No. WhatsApp</label><input required></div>
+      </div>
+      <div class="field"><label>Pilih Aset / Inventaris</label><select><option>Tenda</option><option>Kursi</option><option>Sound System</option></select></div>
+      <div class="field-row">
+        <div class="field"><label>Tanggal Pinjam</label><input type="date" required></div>
+        <div class="field"><label>Tanggal Kembali</label><input type="date" required></div>
+      </div>
+      <div class="field"><label>Detail Keperluan</label><textarea rows="2"></textarea></div>
+      <button class="btn btn-primary btn-full">Kirim Permohonan</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalAdukan">
+  <div class="modal">
+    <div class="modal-head"><h3>📢 Pengaduan &amp; Saran Warga</h3><button class="modal-close" onclick="closeModal('modalAdukan')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Pengaduan/saran terkirim, terima kasih.'); closeModal('modalAdukan');">
+      <div class="field"><label>Nama Lengkap (kosongkan jika anonim)</label><input></div>
+      <div class="field"><label>Jenis Layanan</label><select><option>Pengaduan Layanan</option><option>Saran & Kritik</option><option>Laporan Keamanan</option><option>Laporan Kebersihan</option></select></div>
+      <div class="field"><label>Lokasi Kejadian</label><input></div>
+      <div class="field"><label>Detail Pengaduan / Masukan</label><textarea rows="3" required></textarea></div>
+      <button class="btn btn-primary btn-full">Kirim</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ADMIN APP ================= -->
+<div id="adminApp">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <span class="brand-mark">03·05</span>
+      <div><div style="font-weight:600; font-size:14.5px; color:#fff;">RT03RW05</div><div style="font-size:11px; color:#9db3aa;">Panel Admin</div></div>
+    </div>
+    <ul class="admin-nav">
+      <li><a data-panel="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a></li>
+      <li><a data-panel="warga"><span class="ic">👥</span> Profil Warga</a></li>
+      <li><a data-panel="kas"><span class="ic">💰</span> Arus Kas</a></li>
+      <li><a data-panel="iuran"><span class="ic">✅</span> Ceklist Iuran</a></li>
+      <li><a data-panel="aset"><span class="ic">📦</span> Aset &amp; Inventaris</a></li>
+      <li><a data-panel="layanan"><span class="ic">📮</span> Layanan Warga</a></li>
+      <li><a data-panel="agenda"><span class="ic">🗓️</span> Agenda &amp; Pengumuman</a></li>
+      <li><a data-panel="petugas"><span class="ic">🛡️</span> Petugas &amp; Audit</a></li>
+      <li><a data-panel="pengaturan"><span class="ic">⚙️</span> Pengaturan</a></li>
+    </ul>
+    <div class="admin-sidebar-footer">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <div style="width:34px; height:34px; border-radius:50%; background:var(--gold-500); color:#16211f; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">A</div>
+        <div style="min-width:0;">
+          <div id="adminUserName" style="font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Admin</div>
+          <div id="adminUserRole" style="font-size:11px; color:#9db3aa;">Admin</div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm btn-full" style="border-color:rgba(255,255,255,.2); color:#dfe9e4;" onclick="logoutAdmin()">Keluar</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="nav-burger" style="display:flex;" onclick="toggleAdminSidebar()">☰</button>
+        <h2 id="adminTopbarTitle">Dashboard</h2>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button class="theme-toggle" onclick="toggleTheme()" aria-label="Ganti mode gelap/terang">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="admin-content" id="adminContent"></div>
+  </main>
+</div>
+
+<!-- ================= ADMIN CRUD MODALS ================= -->
+<div class="overlay" id="modalWarga">
+  <div class="modal modal-wide">
+    <div class="modal-head"><h3>Data Profil Warga</h3><button class="modal-close" onclick="closeModal('modalWarga')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Data warga tersimpan.'); closeModal('modalWarga');">
+      <div class="field-row">
+        <div class="field"><label>NIK (16 digit)</label><input maxlength="16" required></div>
+        <div class="field"><label>Nama Lengkap</label><input required></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>No. Rumah / Blok</label><input required></div>
+        <div class="field"><label>Jenis Kelamin</label><select><option>Laki-laki</option><option>Perempuan</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Status Tinggal</label><select><option>Tetap</option><option>Kontrak</option></select></div>
+        <div class="field"><label>Posisi dalam Keluarga</label><select><option>Kepala Keluarga</option><option>Anggota Keluarga</option></select></div>
+      </div>
+      <div class="field"><label>Nomor HP / WhatsApp</label><input></div>
+      <button class="btn btn-primary btn-full">Simpan Data</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalPemasukan">
+  <div class="modal">
+    <div class="modal-head"><h3>Catat Pemasukan Kas</h3><button class="modal-close" onclick="closeModal('modalPemasukan')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Transaksi pemasukan tersimpan.'); closeModal('modalPemasukan');">
+      <div class="field"><label>Nama Pembayar / Sumber Dana</label><input required></div>
+      <div class="field-row">
+        <div class="field"><label>Kategori</label><select><option>Iuran Bulanan</option><option>Donasi</option><option>Lain-lain</option></select></div>
+        <div class="field"><label>Jumlah (Rp)</label><input type="number" required></div>
+      </div>
+      <div class="field"><label>Tanggal Pembayaran</label><input type="date" required></div>
+      <button class="btn btn-primary btn-full">Simpan Transaksi</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalAset">
+  <div class="modal">
+    <div class="modal-head"><h3>Data Aset / Barang</h3><button class="modal-close" onclick="closeModal('modalAset')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Data aset tersimpan.'); closeModal('modalAset');">
+      <div class="field"><label>Nama Barang</label><input required></div>
+      <div class="field-row">
+        <div class="field"><label>Jumlah Total</label><input type="number" required></div>
+        <div class="field"><label>Kondisi Fisik</label><select><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></div>
+      </div>
+      <div class="field"><label>Keterangan / Lokasi Penyimpanan</label><input></div>
+      <button class="btn btn-primary btn-full">Simpan Data</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalAgenda">
+  <div class="modal">
+    <div class="modal-head"><h3>Data Agenda Kegiatan</h3><button class="modal-close" onclick="closeModal('modalAgenda')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Agenda tersimpan.'); closeModal('modalAgenda');">
+      <div class="field"><label>Judul Kegiatan</label><input required></div>
+      <div class="field-row">
+        <div class="field"><label>Kategori</label><select><option>Kerja Bakti</option><option>Rapat</option><option>Lainnya</option></select></div>
+        <div class="field"><label>Tanggal / Jam</label><input type="datetime-local" required></div>
+      </div>
+      <div class="field"><label>Lokasi</label><input required></div>
+      <button class="btn btn-primary btn-full">Simpan Agenda</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalPetugas">
+  <div class="modal">
+    <div class="modal-head"><h3>Tambah Petugas Baru</h3><button class="modal-close" onclick="closeModal('modalPetugas')">✕</button></div>
+    <form onsubmit="event.preventDefault(); toast('Petugas baru ditambahkan.'); closeModal('modalPetugas');">
+      <div class="field"><label>Nama Lengkap</label><input required></div>
+      <div class="field-row">
+        <div class="field"><label>Username</label><input required></div>
+        <div class="field"><label>Password</label><input type="password" required></div>
+      </div>
+      <div class="field"><label>Hak Akses</label><select><option>Staff</option><option>Admin</option></select></div>
+      <button class="btn btn-primary btn-full">Daftarkan</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
