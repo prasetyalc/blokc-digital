@@ -716,7 +716,9 @@ async function renderPengaturanPanel(el){
           <form id="formBranding" onsubmit="event.preventDefault(); handleSaveBranding();">
             <div class="field" style="margin-top:14px;"><label>Nama RT/RW (Header &amp; Footer)</label><input name="namaRtRw" type="text" value="${s.namaRtRw||'RT03RW05 DIGITAL'}"></div>
             <div class="field"><label>Tagline / Sub-judul Header</label><input name="tagline" type="text" value="${s.tagline||'DIGITAL'}"></div>
-            <div class="field"><label>Judul Hero (Beranda)</label><textarea name="heroTitle" rows="2">${s.heroTitle||''}</textarea></div>
+            <div class="field"><label>Label Wilayah (di atas judul hero)</label><input name="wilayahTag" type="text" value="${s.wilayahTag||'WILAYAH RT 03 / RW 05'}"></div>
+            <div class="field"><label>Judul Hero (Beranda)</label><textarea name="heroTitle" rows="2">${s.heroTitle||'Bersama Warga, Membangun Lingkungan yang Nyaman dan Harmonis'}</textarea></div>
+            <div class="field"><label>Deskripsi Hero (paragraf di bawah judul)</label><textarea name="heroLead" rows="2">${s.heroLead||'Satu portal digital untuk komunikasi, transparansi keuangan kas, dan pelayanan administrasi warga — cepat, terbuka, dan mudah diakses kapan saja.'}</textarea></div>
             <div class="field"><label>Deskripsi Singkat (Footer)</label><textarea name="siteDesc" rows="2">${s.siteDesc||'Platform informasi & keuangan warga RT 03 / RW 05.'}</textarea></div>
             <button class="btn btn-primary btn-sm">Simpan Identitas</button>
           </form>
@@ -756,7 +758,9 @@ async function handleSaveBranding(){
   if (formBranding) {
     data.namaRtRw = formBranding.namaRtRw.value;
     data.tagline = formBranding.tagline.value;
+    data.wilayahTag = formBranding.wilayahTag.value;
     data.heroTitle = formBranding.heroTitle.value;
+    data.heroLead = formBranding.heroLead.value;
     data.siteDesc = formBranding.siteDesc.value;
   }
   try {
@@ -776,7 +780,9 @@ function applyBranding(s){
     document.title = s.namaRtRw + " — Sistem Informasi & Keuangan Warga";
   }
   if (s.tagline) setText("siteTaglineNav", s.tagline);
-  if (s.heroTitle) { const h = document.querySelector(".hero h1"); if (h) h.textContent = s.heroTitle; }
+  setText("heroWilayahTag", s.wilayahTag || "WILAYAH RT 03 / RW 05");
+  setText("heroTitle", s.heroTitle || "Bersama Warga, Membangun Lingkungan yang Nyaman dan Harmonis");
+  setText("heroLead", s.heroLead || "Satu portal digital untuk komunikasi, transparansi keuangan kas, dan pelayanan administrasi warga — cepat, terbuka, dan mudah diakses kapan saja.");
   if (s.siteDesc) setText("siteDescFooter", s.siteDesc);
   if (s.copyrightText) setText("siteCopyright", s.copyrightText);
   if (s.logoBase64){
@@ -792,7 +798,10 @@ async function loadBrandingOnBoot(){
   try {
     const s = await RTApi.getSettings();
     applyBranding(s);
-  } catch (err) { /* pakai branding default jika API belum tersambung */ }
+  } catch (err) {
+    // API belum tersambung — tetap hilangkan skeleton loading dengan teks default yang wajar
+    applyBranding({});
+  }
 }
 document.addEventListener("DOMContentLoaded", loadBrandingOnBoot);
 async function handleSaveSettings(e, data){
@@ -816,6 +825,9 @@ async function loadLandingData(){
     setText("fcIuran", `${d.iuranSudahBayar||0}/${d.iuranTotalKK||0} KK`);
     setText("fpIuranPct", pct + "%");
     document.querySelector(".progress-track i") && (document.querySelector(".progress-track i").style.width = pct + "%");
+    const saldoPct = d.totalMasuk ? Math.min(100, Math.round((d.saldoKas / d.totalMasuk) * 100)) : 0;
+    const saldoBar = document.getElementById("fcSaldoBar"); if (saldoBar) saldoBar.style.width = Math.max(0,saldoPct) + "%";
+    const iuranBar = document.getElementById("fcIuranBar"); if (iuranBar) iuranBar.style.width = pct + "%";
 
     const asetBody = document.getElementById("tableAset");
     if (asetBody) asetBody.innerHTML = d.aset?.length ? d.aset.map(a => `
@@ -824,11 +836,17 @@ async function loadLandingData(){
       : emptyRow(4,'📦','Belum ada data aset.');
 
     const jadwal = document.getElementById("listJadwal");
-    if (jadwal && d.agenda?.length) jadwal.innerHTML = d.agenda.slice(0,5).map(a => {
-      const dt = new Date(a.tanggalJam);
-      return `<div class="list-row"><div class="list-date"><b>${isNaN(dt)?'-':dt.getDate()}</b><span>${isNaN(dt)?'-':dt.toLocaleDateString('id-ID',{month:'short'})}</span></div>
-      <div class="list-body"><h4>${a.judul}</h4><p>${a.lokasi||''}</p></div><span class="badge badge-info">${a.status||'Terjadwal'}</span></div>`;
-    }).join("");
+    if (jadwal){
+      jadwal.innerHTML = d.agenda?.length ? d.agenda.slice(0,5).map(a => {
+        const dt = new Date(a.tanggalJam);
+        return `<div class="list-row"><div class="list-date"><b>${isNaN(dt)?'-':dt.getDate()}</b><span>${isNaN(dt)?'-':dt.toLocaleDateString('id-ID',{month:'short'})}</span></div>
+        <div class="list-body"><h4>${a.judul}</h4><p>${a.lokasi||''}</p></div><span class="badge badge-info">${a.status||'Terjadwal'}</span></div>`;
+      }).join("") : emptyRow(1,'🗓️','Belum ada agenda terjadwal.');
+    }
+    const upcoming = (d.agenda||[])
+      .filter(a => !isNaN(new Date(a.tanggalJam)) && new Date(a.tanggalJam) >= new Date())
+      .sort((a,b) => new Date(a.tanggalJam) - new Date(b.tanggalJam))[0];
+    setText("fcAgenda", upcoming ? upcoming.judul : "Belum ada agenda");
 
     const peng = document.getElementById("listPengumuman");
     if (peng && d.pengumuman?.length) peng.innerHTML = d.pengumuman.slice(0,3).map(p => `
@@ -837,6 +855,12 @@ async function loadLandingData(){
   } catch (err) {
     console.warn("Gagal memuat data landing page:", err.message);
     showLandingDataError(err.message);
+    // Jangan biarkan skeleton loading nyangkut selamanya — tampilkan nilai default yang wajar
+    ["statWarga","statKK","statL","statP"].forEach(id => setText(id, 0));
+    setText("fcSaldo", fmtRupiah(0)); setText("fpSaldo", fmtRupiah(0));
+    setText("fpMasuk", fmtRupiah(0)); setText("fpKeluar", fmtRupiah(0));
+    setText("fcIuran", "0/0 KK"); setText("fpIuranPct", "0%");
+    setText("fcAgenda", "Belum ada agenda");
   }
 }
 function showLandingDataError(message){
