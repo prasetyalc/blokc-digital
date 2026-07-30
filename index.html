@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blok C — RT03/RW05 SVS Go Digital!</title>
-<meta name="description" content="Platform digital warga Blok C RT03/RW05: informasi warga, transparansi keuangan kas, agenda kegiatan, pengumuman, dan layanan warga dalam satu portal.">
+<title>RT03RW05 DIGITAL — Sistem Informasi & Keuangan Warga</title>
+<meta name="description" content="Platform digital RT03/RW05: informasi warga, transparansi keuangan kas, agenda kegiatan, pengumuman, dan layanan warga dalam satu portal.">
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -16,8 +20,8 @@
   <nav class="nav" id="mainNav">
     <div class="container">
       <a href="#landingPage" class="brand">
-        <span class="brand-mark">C</span>
-        <span>RT03/RW05 SVS<br><small>GO DIGITAL</small></span>
+        <span class="brand-mark"><img id="siteLogoNav" src="assets/logo.png" alt="Logo RT03RW05 DIGITAL"></span>
+        <span><span id="siteNameNav">RT03RW05</span><br><small id="siteTaglineNav">DIGITAL</small></span>
       </a>
       <ul class="nav-links">
         <li><a href="#landingPage">Beranda</a></li>
@@ -52,7 +56,7 @@
     <div class="container">
       <div class="hero-copy reveal">
         <span class="wilayah-tag">WILAYAH RT 03 / RW 05</span>
-        <h1 style="margin-top:20px;">Bersama Warga, <br>Membangun <em>Lingkungan</em><br>yang Tentram &amp; Rukun</h1>
+        <h1 style="margin-top:20px;">Bersama Warga, <br>Membangun <em>Lingkungan</em><br>yang Nyaman &amp; Harmonis</h1>
         <p class="hero-lead">Satu portal digital untuk komunikasi, transparansi keuangan kas, dan pelayanan administrasi warga RT03/RW05 — cepat, terbuka, dan mudah diakses kapan saja.</p>
         <div class="hero-cta">
           <a href="#section-pengumuman" class="btn btn-primary">Lihat Pengumuman</a>
@@ -192,8 +196,8 @@
   <footer class="footer">
     <div class="container">
       <div>
-        <div class="brand" style="margin-bottom:10px;"><span class="brand-mark">C</span><span>RT03/RW05 SVS<br><small>GO DIGITAL</small></span></div>
-        <p style="color:var(--text-muted); font-size:13.5px; max-width:280px;">Platform informasi & keuangan warga RT 03 / RW 05.</p>
+        <div class="brand" style="margin-bottom:10px;"><span class="brand-mark"><img id="siteLogoFooter" src="assets/logo.png" alt="Logo RT03RW05 DIGITAL"></span><span><span id="siteNameFooter">RT03RW05</span><br><small id="siteTaglineFooter">DIGITAL</small></span></div>
+        <p id="siteDescFooter" style="color:var(--text-muted); font-size:13.5px; max-width:280px;">Platform informasi & keuangan warga RT 03 / RW 05.</p>
       </div>
       <div class="footer-links">
         <a href="#">Tentang Kami</a>
@@ -202,9 +206,13 @@
         <a href="#">Bantuan</a>
       </div>
     </div>
-    <div class="footer-bottom">© 2026 BLOK C GO DIGITAL! Web App v 1.0 created and developed by danangadhi.vercel.app - All Rights Reserved.</div>
+    <div class="footer-bottom" id="siteCopyright">© 2026 RT03RW05 DIGITAL. Seluruh hak cipta dilindungi.</div>
   </footer>
 </div>
+
+<button class="back-to-top" id="backToTop" aria-label="Kembali ke atas">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
 
 <!-- ================= LOGIN MODAL ================= -->
 <div class="overlay" id="loginModal">
@@ -226,14 +234,15 @@
 <div class="overlay" id="modalSurat">
   <div class="modal">
     <div class="modal-head"><h3>📄 Permohonan Surat Pengantar</h3><button class="modal-close" onclick="closeModal('modalSurat')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Permohonan surat terkirim ke pengurus.'); closeModal('modalSurat');">
-      <div class="field"><label>Nama Lengkap</label><input required></div>
+    <form onsubmit="handleSubmitLayanan(event, 'surat', 'modalSurat')">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Nama Lengkap</label><input name="nama" required></div>
       <div class="field-row">
-        <div class="field"><label>NIK Warga</label><input required></div>
-        <div class="field"><label>No. Rumah / Blok</label><input required></div>
+        <div class="field"><label>NIK Warga</label><input name="nik" required></div>
+        <div class="field"><label>No. Rumah / Blok</label><input name="noRumah" required></div>
       </div>
-      <div class="field"><label>Nomor WhatsApp Aktif</label><input required></div>
-      <div class="field"><label>Keperluan Pembuatan Surat</label><textarea rows="3" required></textarea></div>
+      <div class="field"><label>Nomor WhatsApp Aktif</label><input name="noHp" required></div>
+      <div class="field"><label>Keperluan Pembuatan Surat</label><textarea name="detail" rows="3" required></textarea></div>
       <button class="btn btn-primary btn-full">Kirim Permohonan</button>
     </form>
   </div>
@@ -242,17 +251,14 @@
 <div class="overlay" id="modalPinjam">
   <div class="modal">
     <div class="modal-head"><h3>📦 Peminjaman Aset RT</h3><button class="modal-close" onclick="closeModal('modalPinjam')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Permohonan peminjaman terkirim.'); closeModal('modalPinjam');">
+    <form onsubmit="handleSubmitLayanan(event, 'pinjam', 'modalPinjam')">
+      <div class="form-msg err"></div>
       <div class="field-row">
-        <div class="field"><label>Nama Peminjam</label><input required></div>
-        <div class="field"><label>No. WhatsApp</label><input required></div>
+        <div class="field"><label>Nama Peminjam</label><input name="nama" required></div>
+        <div class="field"><label>No. WhatsApp</label><input name="noHp" required></div>
       </div>
-      <div class="field"><label>Pilih Aset / Inventaris</label><select><option>Tenda</option><option>Kursi</option><option>Sound System</option></select></div>
-      <div class="field-row">
-        <div class="field"><label>Tanggal Pinjam</label><input type="date" required></div>
-        <div class="field"><label>Tanggal Kembali</label><input type="date" required></div>
-      </div>
-      <div class="field"><label>Detail Keperluan</label><textarea rows="2"></textarea></div>
+      <div class="field"><label>Nomor Rumah</label><input name="noRumah" required></div>
+      <div class="field"><label>Detail Keperluan (aset, tanggal pinjam & kembali)</label><textarea name="detail" rows="3" required placeholder="Contoh: Pinjam 20 kursi, 10-12 Agustus 2026"></textarea></div>
       <button class="btn btn-primary btn-full">Kirim Permohonan</button>
     </form>
   </div>
@@ -261,11 +267,12 @@
 <div class="overlay" id="modalAdukan">
   <div class="modal">
     <div class="modal-head"><h3>📢 Pengaduan &amp; Saran Warga</h3><button class="modal-close" onclick="closeModal('modalAdukan')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Pengaduan/saran terkirim, terima kasih.'); closeModal('modalAdukan');">
-      <div class="field"><label>Nama Lengkap (kosongkan jika anonim)</label><input></div>
-      <div class="field"><label>Jenis Layanan</label><select><option>Pengaduan Layanan</option><option>Saran & Kritik</option><option>Laporan Keamanan</option><option>Laporan Kebersihan</option></select></div>
-      <div class="field"><label>Lokasi Kejadian</label><input></div>
-      <div class="field"><label>Detail Pengaduan / Masukan</label><textarea rows="3" required></textarea></div>
+    <form onsubmit="handleSubmitLayanan(event, 'aduan', 'modalAdukan')">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Nama Lengkap (kosongkan jika anonim)</label><input name="nama"></div>
+      <div class="field"><label>No. WhatsApp</label><input name="noHp"></div>
+      <div class="field"><label>Lokasi Kejadian</label><input name="noRumah"></div>
+      <div class="field"><label>Detail Pengaduan / Masukan</label><textarea name="detail" rows="3" required></textarea></div>
       <button class="btn btn-primary btn-full">Kirim</button>
     </form>
   </div>
@@ -275,8 +282,8 @@
 <div id="adminApp">
   <aside class="admin-sidebar" id="adminSidebar">
     <div class="admin-brand">
-      <span class="brand-mark">C</span>
-      <div><div style="font-weight:600; font-size:14.5px; color:#fff;">RT03/RW05 SVS</div><div style="font-size:11px; color:#9db3aa;">Dashboard Admin</div></div>
+      <span class="brand-mark"><img id="siteLogoAdmin" src="assets/logo.png" alt="Logo"></span>
+      <div><div id="siteNameAdmin" style="font-weight:600; font-size:14.5px; color:#fff;">RT03RW05</div><div style="font-size:11px; color:#9db3aa;">Panel Admin</div></div>
     </div>
     <ul class="admin-nav">
       <li><a data-panel="dashboard" class="active"><span class="ic">🏠</span> Dashboard</a></li>
@@ -297,7 +304,7 @@
           <div id="adminUserRole" style="font-size:11px; color:#9db3aa;">Admin</div>
         </div>
       </div>
-      <button class="btn btn-outline btn-sm btn-full" style="border-color:rgba(255,255,255,.2); color:#dfe9e4;" onclick="logoutAdmin()">Keluar</button>
+      <button class="btn btn-logout btn-sm btn-full" onclick="logoutAdmin()">Keluar</button>
     </div>
   </aside>
 
@@ -322,20 +329,21 @@
 <div class="overlay" id="modalWarga">
   <div class="modal modal-wide">
     <div class="modal-head"><h3>Data Profil Warga</h3><button class="modal-close" onclick="closeModal('modalWarga')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Data warga tersimpan.'); closeModal('modalWarga');">
+    <form onsubmit="handleSaveWarga(event)">
+      <div class="form-msg err"></div>
       <div class="field-row">
-        <div class="field"><label>NIK (16 digit)</label><input maxlength="16" required></div>
-        <div class="field"><label>Nama Lengkap</label><input required></div>
+        <div class="field"><label>NIK (16 digit)</label><input name="nik" maxlength="16" required></div>
+        <div class="field"><label>Nama Lengkap</label><input name="nama" required></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>No. Rumah / Blok</label><input required></div>
-        <div class="field"><label>Jenis Kelamin</label><select><option>Laki-laki</option><option>Perempuan</option></select></div>
+        <div class="field"><label>No. Rumah / Blok</label><input name="noRumah" required></div>
+        <div class="field"><label>Jenis Kelamin</label><select name="jenisKelamin"><option>Laki-laki</option><option>Perempuan</option></select></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Status Tinggal</label><select><option>Tetap</option><option>Kontrak</option></select></div>
-        <div class="field"><label>Posisi dalam Keluarga</label><select><option>Kepala Keluarga</option><option>Anggota Keluarga</option></select></div>
+        <div class="field"><label>Status Tinggal</label><select name="statusTinggal"><option>Tetap</option><option>Kontrak</option></select></div>
+        <div class="field"><label>Posisi dalam Keluarga</label><select name="posisiKeluarga"><option>Kepala Keluarga</option><option>Anggota Keluarga</option></select></div>
       </div>
-      <div class="field"><label>Nomor HP / WhatsApp</label><input></div>
+      <div class="field"><label>Nomor HP / WhatsApp</label><input name="noHp"></div>
       <button class="btn btn-primary btn-full">Simpan Data</button>
     </form>
   </div>
@@ -344,13 +352,30 @@
 <div class="overlay" id="modalPemasukan">
   <div class="modal">
     <div class="modal-head"><h3>Catat Pemasukan Kas</h3><button class="modal-close" onclick="closeModal('modalPemasukan')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Transaksi pemasukan tersimpan.'); closeModal('modalPemasukan');">
-      <div class="field"><label>Nama Pembayar / Sumber Dana</label><input required></div>
+    <form onsubmit="handleSaveKas(event, 'masuk')">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Nama Pembayar / Sumber Dana</label><input name="namaSumber" required></div>
       <div class="field-row">
-        <div class="field"><label>Kategori</label><select><option>Iuran Bulanan</option><option>Donasi</option><option>Lain-lain</option></select></div>
-        <div class="field"><label>Jumlah (Rp)</label><input type="number" required></div>
+        <div class="field"><label>Kategori</label><select name="kategori"><option>Iuran Bulanan</option><option>Donasi</option><option>Lain-lain</option></select></div>
+        <div class="field"><label>Jumlah (Rp)</label><input name="jumlah" type="number" required></div>
       </div>
-      <div class="field"><label>Tanggal Pembayaran</label><input type="date" required></div>
+      <div class="field"><label>Tanggal Pembayaran</label><input name="tanggal" type="date" required></div>
+      <button class="btn btn-primary btn-full">Simpan Transaksi</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalPengeluaran">
+  <div class="modal">
+    <div class="modal-head"><h3>Catat Pengeluaran Kas</h3><button class="modal-close" onclick="closeModal('modalPengeluaran')">✕</button></div>
+    <form onsubmit="handleSaveKas(event, 'keluar')">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Keperluan Pengeluaran</label><input name="namaSumber" required></div>
+      <div class="field-row">
+        <div class="field"><label>Kategori</label><select name="kategori"><option>Operasional</option><option>Kebersihan</option><option>Keamanan</option><option>Sosial</option><option>Lain-lain</option></select></div>
+        <div class="field"><label>Jumlah (Rp)</label><input name="jumlah" type="number" required></div>
+      </div>
+      <div class="field"><label>Tanggal Pengeluaran</label><input name="tanggal" type="date" required></div>
       <button class="btn btn-primary btn-full">Simpan Transaksi</button>
     </form>
   </div>
@@ -359,13 +384,14 @@
 <div class="overlay" id="modalAset">
   <div class="modal">
     <div class="modal-head"><h3>Data Aset / Barang</h3><button class="modal-close" onclick="closeModal('modalAset')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Data aset tersimpan.'); closeModal('modalAset');">
-      <div class="field"><label>Nama Barang</label><input required></div>
+    <form onsubmit="handleSaveAset(event)">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Nama Barang</label><input name="nama" required></div>
       <div class="field-row">
-        <div class="field"><label>Jumlah Total</label><input type="number" required></div>
-        <div class="field"><label>Kondisi Fisik</label><select><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></div>
+        <div class="field"><label>Jumlah Total</label><input name="jumlahTotal" type="number" required></div>
+        <div class="field"><label>Kondisi Fisik</label><select name="kondisi"><option>Baik</option><option>Rusak Ringan</option><option>Rusak Berat</option></select></div>
       </div>
-      <div class="field"><label>Keterangan / Lokasi Penyimpanan</label><input></div>
+      <div class="field"><label>Keterangan / Lokasi Penyimpanan</label><input name="keterangan"></div>
       <button class="btn btn-primary btn-full">Simpan Data</button>
     </form>
   </div>
@@ -374,14 +400,31 @@
 <div class="overlay" id="modalAgenda">
   <div class="modal">
     <div class="modal-head"><h3>Data Agenda Kegiatan</h3><button class="modal-close" onclick="closeModal('modalAgenda')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Agenda tersimpan.'); closeModal('modalAgenda');">
-      <div class="field"><label>Judul Kegiatan</label><input required></div>
+    <form onsubmit="handleSaveAgenda(event)">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Judul Kegiatan</label><input name="judul" required></div>
       <div class="field-row">
-        <div class="field"><label>Kategori</label><select><option>Kerja Bakti</option><option>Rapat</option><option>Lainnya</option></select></div>
-        <div class="field"><label>Tanggal / Jam</label><input type="datetime-local" required></div>
+        <div class="field"><label>Kategori</label><select name="kategori"><option>Kerja Bakti</option><option>Rapat</option><option>Lainnya</option></select></div>
+        <div class="field"><label>Tanggal / Jam</label><input name="tanggalJam" type="datetime-local" required></div>
       </div>
-      <div class="field"><label>Lokasi</label><input required></div>
+      <div class="field"><label>Lokasi</label><input name="lokasi" required></div>
       <button class="btn btn-primary btn-full">Simpan Agenda</button>
+    </form>
+  </div>
+</div>
+
+<div class="overlay" id="modalPengumuman">
+  <div class="modal">
+    <div class="modal-head"><h3>Buat Pengumuman</h3><button class="modal-close" onclick="closeModal('modalPengumuman')">✕</button></div>
+    <form onsubmit="handleSavePengumuman(event)">
+      <div class="form-msg err"></div>
+      <div class="field-row">
+        <div class="field"><label>Tanggal</label><input name="tanggal" type="date" required></div>
+        <div class="field"><label>Tipe</label><select name="tipe"><option>Info</option><option>PENTING</option></select></div>
+      </div>
+      <div class="field"><label>Judul Pengumuman</label><input name="judul" required></div>
+      <div class="field"><label>Isi Pengumuman</label><textarea name="isi" rows="4" required></textarea></div>
+      <button class="btn btn-primary btn-full">Terbitkan</button>
     </form>
   </div>
 </div>
@@ -389,13 +432,14 @@
 <div class="overlay" id="modalPetugas">
   <div class="modal">
     <div class="modal-head"><h3>Tambah Petugas Baru</h3><button class="modal-close" onclick="closeModal('modalPetugas')">✕</button></div>
-    <form onsubmit="event.preventDefault(); toast('Petugas baru ditambahkan.'); closeModal('modalPetugas');">
-      <div class="field"><label>Nama Lengkap</label><input required></div>
+    <form onsubmit="handleSavePetugas(event)">
+      <div class="form-msg err"></div>
+      <div class="field"><label>Nama Lengkap</label><input name="fullname" required></div>
       <div class="field-row">
-        <div class="field"><label>Username</label><input required></div>
-        <div class="field"><label>Password</label><input type="password" required></div>
+        <div class="field"><label>Username</label><input name="username" required></div>
+        <div class="field"><label>Password</label><input name="password" type="password" required></div>
       </div>
-      <div class="field"><label>Hak Akses</label><select><option>Staff</option><option>Admin</option></select></div>
+      <div class="field"><label>Hak Akses</label><select name="role"><option>Staff</option><option>Admin</option></select></div>
       <button class="btn btn-primary btn-full">Daftarkan</button>
     </form>
   </div>
