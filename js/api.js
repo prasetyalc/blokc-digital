@@ -6,7 +6,7 @@
 
 // GANTI dengan URL Web App hasil deploy Apps Script kamu, contoh:
 // "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxx/exec"
-const API_URL = "https://script.google.com/macros/s/AKfycbzYjJCrZ9zX36IPIZRKPUda8iwDgyiea3anAIGUrHhqsjmXHcWbXp_4C33mhC_8atyp/exec";
+const API_URL = "PASTE_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
 
 const RTApi = (() => {
 
@@ -18,6 +18,7 @@ const RTApi = (() => {
   async function get(action, params = {}) {
     const url = new URL(API_URL);
     url.searchParams.set("action", action);
+    url.searchParams.set("token", getToken());
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
     const res = await fetch(url.toString(), { method: "GET" });
     if (!res.ok) throw new Error("Gagal memuat data (" + res.status + ")");
