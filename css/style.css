@@ -119,6 +119,8 @@ html[data-theme="dark"] .btn-primary{background:var(--gold-500); color:#16211f;}
 .btn-primary:hover{transform:translateY(-2px); box-shadow:0 10px 24px -8px rgba(15,61,62,.4);}
 .btn-outline{background:transparent; border-color:var(--border); color:var(--text);}
 .btn-outline:hover{border-color:var(--accent); background:var(--surface-2);}
+.btn-logout{border-color:rgba(255,255,255,.2); color:#dfe9e4; background:transparent;}
+.btn-logout:hover{color:#0b2d2c; background:var(--gold-500); border-color:var(--gold-500);}
 .btn-ghost{background:transparent; color:var(--text-muted); padding:8px 12px;}
 .btn-ghost:hover{color:var(--text);}
 .btn-sm{padding:8px 14px; font-size:13px;}
@@ -143,8 +145,9 @@ html[data-theme="dark"] .btn-primary{background:var(--gold-500); color:#16211f;}
   background:linear-gradient(155deg, var(--teal-900), var(--teal-700));
   display:flex; align-items:center; justify-content:center;
   color:var(--gold-400); font-family:var(--font-mono); font-weight:700; font-size:12px;
-  flex-shrink:0;
+  flex-shrink:0; overflow:hidden;
 }
+.brand-mark img{width:100%; height:100%; object-fit:cover;}
 .brand small{display:block; font-family:var(--font-body); font-weight:500; font-size:11px; color:var(--text-muted); letter-spacing:.02em;}
 .nav-links{display:flex; align-items:center; gap:6px; list-style:none; margin:0; padding:0;}
 .nav-links a{
@@ -211,17 +214,21 @@ html[data-theme="dark"] .icon-sun{display:block;}
   padding:5px 9px; border-radius:6px; background:var(--teal-900); color:var(--gold-400); letter-spacing:.04em;
 }
 
-/* ---------------- Reveal-on-scroll ---------------- */
-.reveal{opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);}
-.reveal.is-visible{opacity:1; transform:translateY(0);}
-.reveal-stagger > *{opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease;}
-.reveal-stagger.is-visible > *{opacity:1; transform:translateY(0);}
-.reveal-stagger.is-visible > *:nth-child(1){transition-delay:.02s;}
-.reveal-stagger.is-visible > *:nth-child(2){transition-delay:.09s;}
-.reveal-stagger.is-visible > *:nth-child(3){transition-delay:.16s;}
-.reveal-stagger.is-visible > *:nth-child(4){transition-delay:.23s;}
-.reveal-stagger.is-visible > *:nth-child(5){transition-delay:.30s;}
-.reveal-stagger.is-visible > *:nth-child(6){transition-delay:.37s;}
+/* ---------------- Reveal-on-scroll ----------------
+   PENTING: efek "sembunyi dulu baru muncul" HANYA aktif kalau class
+   "js-ready" berhasil ditambahkan oleh js/app.js (lihat baris pertama
+   file itu). Kalau JS gagal dimuat (mis. salah path saat deploy),
+   konten tetap tampil normal (fallback aman) alih-alih hilang total. */
+.js-ready .reveal{opacity:0; transform:translateY(28px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);}
+.js-ready .reveal.is-visible{opacity:1; transform:translateY(0);}
+.js-ready .reveal-stagger > *{opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease;}
+.js-ready .reveal-stagger.is-visible > *{opacity:1; transform:translateY(0);}
+.js-ready .reveal-stagger.is-visible > *:nth-child(1){transition-delay:.02s;}
+.js-ready .reveal-stagger.is-visible > *:nth-child(2){transition-delay:.09s;}
+.js-ready .reveal-stagger.is-visible > *:nth-child(3){transition-delay:.16s;}
+.js-ready .reveal-stagger.is-visible > *:nth-child(4){transition-delay:.23s;}
+.js-ready .reveal-stagger.is-visible > *:nth-child(5){transition-delay:.30s;}
+.js-ready .reveal-stagger.is-visible > *:nth-child(6){transition-delay:.37s;}
 
 /* ---------------- Cards / grids ---------------- */
 .grid{display:grid; gap:20px;}
@@ -419,7 +426,44 @@ body.admin-mode{overflow:auto;}
 .mobile-nav.is-open{transform:translateY(0); opacity:1; pointer-events:auto;}
 .mobile-nav a{padding:12px 6px; font-size:15px; font-weight:500; border-bottom:1px solid var(--border);}
 
-/* ---------------- Responsive ---------------- */
+/* ---------------- Welcome card & clock (Dashboard) ---------------- */
+.welcome-card{background:linear-gradient(155deg, var(--teal-950), var(--teal-800)); border:none; color:#f2f6f2;}
+.welcome-row{display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;}
+.welcome-card .eyebrow{color:var(--gold-400);}
+.welcome-card .eyebrow::before{background:var(--gold-400);}
+.welcome-card h3{color:#fff;}
+.welcome-card p{color:#c8d8d1 !important;}
+.welcome-clock{
+  font-family:var(--font-mono); font-size:34px; font-weight:600; letter-spacing:.02em; color:#fff;
+  background:rgba(255,255,255,.08); padding:14px 26px; border-radius:14px; border:1px solid rgba(255,255,255,.14);
+}
+
+/* ---------------- Back to top ---------------- */
+.back-to-top{
+  position:fixed; right:22px; bottom:22px; z-index:400;
+  width:46px; height:46px; border-radius:50%; border:1px solid var(--border);
+  background:var(--surface); color:var(--text); box-shadow:var(--shadow);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  opacity:0; visibility:hidden; pointer-events:none; transform:translateY(12px);
+  transition:opacity .3s ease, transform .3s ease, visibility .3s, background .3s ease, border-color .3s ease;
+}
+.back-to-top.show{opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0);}
+.back-to-top:hover{border-color:var(--accent); transform:translateY(-3px);}
+.back-to-top:hover.show{transform:translateY(-3px);}
+.back-to-top svg{width:19px; height:19px;}
+/* Tombol back to top khusus untuk halaman publik saja — disembunyikan total di panel admin */
+body.admin-mode .back-to-top{display:none !important;}
+
+/* ---------------- Branding settings (Pengaturan) ---------------- */
+.upload-box{
+  display:flex; align-items:center; gap:14px; padding:14px; border:1px dashed var(--border); border-radius:12px; background:var(--bg);
+}
+.upload-preview{
+  width:56px; height:56px; border-radius:12px; background:var(--bg-alt); display:flex; align-items:center; justify-content:center;
+  overflow:hidden; flex-shrink:0; border:1px solid var(--border);
+}
+.upload-preview img{width:100%; height:100%; object-fit:contain;}
+.upload-preview.round{border-radius:50%;}
 @media (max-width:980px){
   .hero .container{grid-template-columns:1fr;}
   .hero-visual{display:none;}
