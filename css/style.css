@@ -362,6 +362,8 @@ body.admin-mode{overflow:auto;}
   width:260px; flex-shrink:0; background:var(--teal-950); color:#dfe9e4; min-height:100vh; padding:22px 16px;
   position:sticky; top:0; align-self:flex-start; display:flex; flex-direction:column;
 }
+.admin-sidebar-close{display:none;}
+.admin-sidebar-backdrop{display:none;}
 .admin-brand{display:flex; align-items:center; gap:10px; padding:6px 10px 22px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:16px;}
 .admin-nav{list-style:none; margin:0; padding:0; flex:1; display:flex; flex-direction:column; gap:2px; overflow-y:auto;}
 .admin-nav a{
@@ -418,13 +420,7 @@ body.admin-mode{overflow:auto;}
 @keyframes toastIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
 
 /* mobile menu */
-.mobile-nav{
-  position:fixed; top:var(--nav-h); left:0; right:0; background:var(--surface); border-bottom:1px solid var(--border);
-  padding:14px 24px 22px; display:flex; flex-direction:column; gap:4px; transform:translateY(-12px); opacity:0; pointer-events:none;
-  transition:.25s ease; z-index:190;
-}
-.mobile-nav.is-open{transform:translateY(0); opacity:1; pointer-events:auto;}
-.mobile-nav a{padding:12px 6px; font-size:15px; font-weight:500; border-bottom:1px solid var(--border);}
+/* .mobile-nav dihapus — burger navigasi halaman publik sudah ditiadakan */
 
 /* ---------------- Welcome card & clock (Dashboard) ---------------- */
 .welcome-card{background:linear-gradient(155deg, var(--teal-950), var(--teal-800)); border:none; color:#f2f6f2;}
@@ -472,9 +468,24 @@ body.admin-mode .back-to-top{display:none !important;}
   .finance-panel .fp-grid{grid-template-columns:repeat(2,1fr); row-gap:26px;}
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
   .nav-links{display:none;}
-  .nav-burger{display:flex;}
-  .admin-sidebar{position:fixed; left:-280px; z-index:300; transition:left .3s ease; box-shadow:var(--shadow);}
-  .admin-sidebar.is-open{left:0;}
+  .admin-sidebar{
+    position:fixed; top:0; left:0; height:100vh; min-height:0;
+    transform:translateX(-100%); z-index:320; box-shadow:var(--shadow);
+    transition:transform .3s cubic-bezier(.2,.8,.2,1);
+  }
+  .admin-sidebar.is-open{transform:translateX(0);}
+  .admin-sidebar-close{
+    display:flex; align-items:center; justify-content:center; position:absolute; top:14px; right:14px;
+    width:32px; height:32px; border-radius:50%; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06);
+    color:#dfe9e4; font-size:15px; cursor:pointer; z-index:2;
+  }
+  .admin-sidebar-close:hover{background:rgba(255,255,255,.14);}
+  .admin-sidebar-backdrop{
+    display:block; position:fixed; inset:0; background:rgba(6,14,12,.55); backdrop-filter:blur(2px);
+    z-index:310; opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .admin-sidebar-backdrop.show{opacity:1; pointer-events:auto;}
+  body.admin-sidebar-locked{overflow:hidden;}
 }
 @media (max-width:640px){
   .grid-3, .grid-2, .grid-4{grid-template-columns:1fr;}
