@@ -205,6 +205,12 @@ function fmtTanggal(d){
   if (isNaN(date)) return String(d);
   return date.toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
 }
+function fmtTanggalLengkap(d){
+  if (!d) return "-";
+  const date = new Date(d);
+  if (isNaN(date)) return String(d);
+  return date.toLocaleDateString("id-ID", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+}
 function emptyRow(colspan, icon, text){
   return `<tr><td colspan="${colspan}"><div class="empty-state"><div class="es-ic">${icon}</div>${text}</div></td></tr>`;
 }
@@ -839,7 +845,7 @@ async function loadLandingData(){
     if (jadwal){
       jadwal.innerHTML = d.agenda?.length ? d.agenda.slice(0,5).map(a => {
         const dt = new Date(a.tanggalJam);
-        return `<div class="list-row"><div class="list-date"><b>${isNaN(dt)?'-':dt.getDate()}</b><span>${isNaN(dt)?'-':dt.toLocaleDateString('id-ID',{month:'short'})}</span></div>
+        return `<div class="list-row"><div class="list-date"><b>${isNaN(dt)?'-':dt.getDate()}</b><span>${isNaN(dt)?'-':dt.toLocaleDateString('id-ID',{month:'short'})}</span><small>${isNaN(dt)?'':dt.getFullYear()}</small></div>
         <div class="list-body"><h4>${a.judul}</h4><p>${a.lokasi||''}</p></div><span class="badge badge-info">${a.status||'Terjadwal'}</span></div>`;
       }).join("") : emptyRow(1,'🗓️','Belum ada agenda terjadwal.');
     }
@@ -851,7 +857,8 @@ async function loadLandingData(){
     const peng = document.getElementById("listPengumuman");
     if (peng && d.pengumuman?.length) peng.innerHTML = d.pengumuman.slice(0,3).map(p => `
       <div class="card"><span class="badge ${p.tipe==='PENTING'?'badge-danger':'badge-info'}">${p.tipe||'Info'}</span>
-      <h3 style="margin-top:14px;">${p.judul}</h3><p>${(p.isi||'').slice(0,120)}</p></div>`).join("");
+      <p class="pengumuman-date">${fmtTanggalLengkap(p.tanggal)}</p>
+      <h3 style="margin-top:6px;">${p.judul}</h3><p>${(p.isi||'').slice(0,120)}</p></div>`).join("");
   } catch (err) {
     console.warn("Gagal memuat data landing page:", err.message);
     showLandingDataError(err.message);
