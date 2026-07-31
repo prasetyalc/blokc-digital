@@ -232,6 +232,7 @@ async function submitEntity(form, apiCall, { successMsg, modalId, reloadPanel })
     toast(successMsg);
     if (modalId) closeModal(modalId);
     form.reset();
+    if (form.id !== undefined && form.querySelector('[name="id"]')) form.querySelector('[name="id"]').value = "";
     if (reloadPanel) loadAdminPanel(reloadPanel);
   } catch (err) {
     if (msg){ msg.textContent = err.message; msg.className = "form-msg err show"; }
@@ -239,6 +240,37 @@ async function submitEntity(form, apiCall, { successMsg, modalId, reloadPanel })
   } finally {
     if (btn){ btn.disabled = false; btn.textContent = originalLabel; }
   }
+}
+
+/* ---------- 9b. HELPER: MODAL TAMBAH / EDIT / SALIN (dipakai di semua panel CRUD) ---------- */
+function openAddModal(modalId, titleText){
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  const form = modal.querySelector("form");
+  if (form){ form.reset(); const idField = form.querySelector('[name="id"]'); if (idField) idField.value = ""; }
+  const titleEl = modal.querySelector(".modal-head h3");
+  if (titleEl){ if (!titleEl.dataset.orig) titleEl.dataset.orig = titleEl.textContent; titleEl.textContent = titleText || titleEl.dataset.orig; }
+  openModal(modalId);
+}
+function openEditModal(modalId, data, titleText){
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+  const form = modal.querySelector("form");
+  if (form){
+    form.reset();
+    Object.entries(data || {}).forEach(([k, v]) => { const el = form.querySelector(`[name="${k}"]`); if (el) el.value = v ?? ""; });
+    const idField = form.querySelector('[name="id"]'); if (idField) idField.value = data.id || "";
+  }
+  const titleEl = modal.querySelector(".modal-head h3");
+  if (titleEl){ if (!titleEl.dataset.orig) titleEl.dataset.orig = titleEl.textContent; titleEl.textContent = titleText; }
+  openModal(modalId);
+}
+function waLink(no){
+  if (!no) return "";
+  let digits = String(no).replace(/[^0-9]/g, "");
+  if (digits.startsWith("0")) digits = "62" + digits.slice(1);
+  else if (!digits.startsWith("62")) digits = "62" + digits;
+  return "https://wa.me/" + digits;
 }
 
 /* ---------- 10. DASHBOARD ---------- */
@@ -326,12 +358,12 @@ async function renderWargaPanel(el){
   el.innerHTML = `
     <div class="toolbar">
       <div class="filter-row"><input id="wargaSearch" type="text" placeholder="Cari nama / NIK..."></div>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modalWarga')">+ Tambah Warga</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('modalWarga','Tambah Data Warga')">+ Tambah Warga</button>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>NIK</th><th>Nama</th><th>No. Rumah</th><th>JK</th><th>Status</th><th>Aksi</th></tr></thead>
-        <tbody id="wargaBody">${emptyRow(6,'⏳','Memuat data...')}</tbody>
+        <thead><tr><th>NIK</th><th>Nama</th><th>No. Rumah</th><th>JK</th><th>WhatsApp</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="wargaBody">${emptyRow(7,'⏳','Memuat data...')}</tbody>
       </table>
     </div>`;
   try {
@@ -343,19 +375,40 @@ async function renderWargaPanel(el){
       renderWargaRows(rows.filter(r => (r.nama||"").toLowerCase().includes(q) || (r.nik||"").toString().includes(q)));
     });
   } catch (err) {
-    document.getElementById("wargaBody").innerHTML = errorRow(6, err);
+    document.getElementById("wargaBody").innerHTML = errorRow(7, err);
   }
 }
 function renderWargaRows(rows){
   const body = document.getElementById("wargaBody");
-  if (!rows.length){ body.innerHTML = emptyRow(6,'👥','Belum ada data warga.'); return; }
+  if (!rows.length){ body.innerHTML = emptyRow(7,'👥','Belum ada data warga.'); return; }
   body.innerHTML = rows.map(r => `
     <tr>
       <td>${r.nik || "-"}</td><td>${r.nama || "-"}</td><td>${r.noRumah || "-"}</td>
       <td>${r.jenisKelamin === "Laki-laki" ? "L" : "P"}</td>
+      <td>${r.noHp ? `<a href="${waLink(r.noHp)}" target="_blank" rel="noopener" class="wa-link" title="Hubungi via WhatsApp (darurat)">💬 ${r.noHp}</a>` : "-"}</td>
       <td><span class="badge ${r.statusAktif==='Pindahan'?'badge-muted':'badge-success'}">${r.statusAktif || "Aktif"}</span></td>
-      <td class="row-actions"><button class="icon-btn" title="Hapus" onclick="deleteWarga('${r.id}')">🗑️</button></td>
+      <td class="row-actions">
+        <button class="icon-btn" title="Edit" onclick='editWarga("${r.id}")'>✏️</button>
+        <button class="icon-btn" title="Salin" onclick='duplicateWarga("${r.id}")'>📋</button>
+        <button class="icon-btn" title="Hapus" onclick="deleteWarga('${r.id}')">🗑️</button>
+      </td>
     </tr>`).join("");
+}
+function findWarga(id){ return (window.__wargaCache||[]).find(r => r.id === id); }
+function editWarga(id){
+  const data = findWarga(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang halaman.", "err");
+  openEditModal("modalWarga", data, "Edit Data Warga");
+}
+async function duplicateWarga(id){
+  const data = findWarga(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang halaman.", "err");
+  try {
+    const copy = { ...data, id: undefined, nama: data.nama + " (Salinan)" };
+    await RTApi.saveWarga(copy);
+    toast("Data warga disalin.");
+    loadAdminPanel("warga");
+  } catch (err) { toast(err.message, "err"); }
 }
 async function deleteWarga(id){
   if (!confirm("Hapus data warga ini?")) return;
@@ -365,9 +418,10 @@ async function deleteWarga(id){
 async function handleSaveWarga(e){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["nik","nama","noRumah","jenisKelamin","statusTinggal","posisiKeluarga","noHp"]);
-  data.statusAktif = "Aktif";
-  await submitEntity(form, () => RTApi.saveWarga(data), { successMsg: "Data warga tersimpan.", modalId: "modalWarga", reloadPanel: "warga" });
+  const data = formToObject(form, ["id","nik","nama","noRumah","jenisKelamin","statusTinggal","posisiKeluarga","noHp"]);
+  const isEdit = !!data.id;
+  if (!isEdit) { delete data.id; data.statusAktif = "Aktif"; }
+  await submitEntity(form, () => RTApi.saveWarga(data), { successMsg: isEdit ? "Perubahan data warga tersimpan." : "Data warga tersimpan.", modalId: "modalWarga", reloadPanel: "warga" });
 }
 
 /* ---------- 12. ARUS KAS ---------- */
@@ -423,7 +477,7 @@ async function renderKasPanel(el, tab = "masuk"){
     </div>
     <div class="toolbar">
       <div></div>
-      <button class="btn btn-primary btn-sm" onclick="openModal('${tab==='masuk'?'modalPemasukan':'modalPengeluaran'}')">+ Catat ${tab==='masuk'?'Pemasukan':'Pengeluaran'}</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('${tab==='masuk'?'modalPemasukan':'modalPengeluaran'}','Catat ${tab==='masuk'?'Pemasukan':'Pengeluaran'} Kas')">+ Catat ${tab==='masuk'?'Pemasukan':'Pengeluaran'}</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -433,6 +487,7 @@ async function renderKasPanel(el, tab = "masuk"){
     </div>`;
   try {
     const allKas = await RTApi.listKas();
+    window.__kasCache = allKas;
     document.getElementById("kasChartWrap").innerHTML = buildKasChart(allKas);
     const rows = allKas.filter(r => r.tipe === tab);
     const body = document.getElementById("kasBody");
@@ -440,12 +495,32 @@ async function renderKasPanel(el, tab = "masuk"){
       <tr>
         <td>${fmtTanggal(r.tanggal)}</td><td>${r.namaSumber || "-"}</td><td>${r.kategori || "-"}</td>
         <td>${fmtRupiah(r.jumlah)}</td>
-        <td class="row-actions"><button class="icon-btn" title="Hapus" onclick="deleteKas('${r.id}','${tab}')">🗑️</button></td>
+        <td class="row-actions">
+          <button class="icon-btn" title="Edit" onclick='editKas("${r.id}","${tab}")'>✏️</button>
+          <button class="icon-btn" title="Salin" onclick='duplicateKas("${r.id}","${tab}")'>📋</button>
+          <button class="icon-btn" title="Hapus" onclick="deleteKas('${r.id}','${tab}')">🗑️</button>
+        </td>
       </tr>`).join("") : emptyRow(5,'💰','Belum ada transaksi.');
   } catch (err) {
     document.getElementById("kasChartWrap").innerHTML = "";
     document.getElementById("kasBody").innerHTML = errorRow(5, err);
   }
+}
+function findKas(id){ return (window.__kasCache||[]).find(r => r.id === id); }
+function editKas(id, tab){
+  const data = findKas(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  const modalId = tab === "masuk" ? "modalPemasukan" : "modalPengeluaran";
+  openEditModal(modalId, data, `Edit ${tab==='masuk'?'Pemasukan':'Pengeluaran'} Kas`);
+}
+async function duplicateKas(id, tab){
+  const data = findKas(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  try {
+    await RTApi.saveKas({ ...data, id: undefined, tanggal: new Date().toISOString().slice(0,10) });
+    toast("Transaksi disalin.");
+    renderKasPanel(document.getElementById("adminContent"), tab);
+  } catch (err) { toast(err.message, "err"); }
 }
 async function deleteKas(id, tab){
   if (!confirm("Hapus transaksi ini?")) return;
@@ -455,10 +530,11 @@ async function deleteKas(id, tab){
 async function handleSaveKas(e, tipe){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["namaSumber","kategori","jumlah","tanggal"]);
+  const data = formToObject(form, ["id","namaSumber","kategori","jumlah","tanggal"]);
+  if (!data.id) delete data.id;
   data.tipe = tipe;
   await submitEntity(form, () => RTApi.saveKas(data), {
-    successMsg: "Transaksi tersimpan.",
+    successMsg: data.id ? "Perubahan transaksi tersimpan." : "Transaksi tersimpan.",
     modalId: tipe === "masuk" ? "modalPemasukan" : "modalPengeluaran",
   });
   renderKasPanel(document.getElementById("adminContent"), tipe);
@@ -505,7 +581,7 @@ async function toggleIuranRow(wargaId, bulan, tahun, checked){
 /* ---------- 14. ASET & INVENTARIS ---------- */
 async function renderAsetPanel(el){
   el.innerHTML = `
-    <div class="toolbar"><div></div><button class="btn btn-primary btn-sm" onclick="openModal('modalAset')">+ Tambah Aset</button></div>
+    <div class="toolbar"><div></div><button class="btn btn-primary btn-sm" onclick="openAddModal('modalAset','Tambah Aset / Barang')">+ Tambah Aset</button></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Nama Barang</th><th>Total</th><th>Tersedia</th><th>Kondisi</th><th>Aksi</th></tr></thead>
@@ -514,16 +590,36 @@ async function renderAsetPanel(el){
     </div>`;
   try {
     const rows = await RTApi.listAset();
+    window.__asetCache = rows;
     const body = document.getElementById("asetBody");
     body.innerHTML = rows.length ? rows.map(r => `
       <tr>
         <td>${r.nama}</td><td>${r.jumlahTotal}</td><td>${r.jumlahTersedia}</td>
         <td><span class="badge ${r.kondisi==='Baik'?'badge-success':r.kondisi==='Rusak Berat'?'badge-danger':'badge-warn'}">${r.kondisi||'-'}</span></td>
-        <td class="row-actions"><button class="icon-btn" title="Hapus" onclick="deleteAset('${r.id}')">🗑️</button></td>
+        <td class="row-actions">
+          <button class="icon-btn" title="Edit" onclick='editAset("${r.id}")'>✏️</button>
+          <button class="icon-btn" title="Salin" onclick='duplicateAset("${r.id}")'>📋</button>
+          <button class="icon-btn" title="Hapus" onclick="deleteAset('${r.id}')">🗑️</button>
+        </td>
       </tr>`).join("") : emptyRow(5,'📦','Belum ada data aset.');
   } catch (err) {
     document.getElementById("asetBody").innerHTML = errorRow(5, err);
   }
+}
+function findAset(id){ return (window.__asetCache||[]).find(r => r.id === id); }
+function editAset(id){
+  const data = findAset(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  openEditModal("modalAset", data, "Edit Data Aset");
+}
+async function duplicateAset(id){
+  const data = findAset(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  try {
+    await RTApi.saveAset({ ...data, id: undefined, nama: data.nama + " (Salinan)", jumlahTersedia: data.jumlahTotal });
+    toast("Data aset disalin.");
+    loadAdminPanel("aset");
+  } catch (err) { toast(err.message, "err"); }
 }
 async function deleteAset(id){
   if (!confirm("Hapus data aset ini?")) return;
@@ -533,9 +629,11 @@ async function deleteAset(id){
 async function handleSaveAset(e){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["nama","jumlahTotal","kondisi","keterangan"]);
-  data.jumlahTersedia = data.jumlahTotal;
-  await submitEntity(form, () => RTApi.saveAset(data), { successMsg: "Data aset tersimpan.", modalId: "modalAset", reloadPanel: "aset" });
+  const data = formToObject(form, ["id","nama","jumlahTotal","kondisi","keterangan"]);
+  const isEdit = !!data.id;
+  if (!isEdit){ delete data.id; data.jumlahTersedia = data.jumlahTotal; }
+  // Saat edit, jumlahTersedia sengaja TIDAK ikut dikirim supaya angka stok yang sedang dipinjam tidak tertimpa/reset.
+  await submitEntity(form, () => RTApi.saveAset(data), { successMsg: isEdit ? "Perubahan data aset tersimpan." : "Data aset tersimpan.", modalId: "modalAset", reloadPanel: "aset" });
 }
 
 /* ---------- 15. LAYANAN & PENGADUAN ---------- */
@@ -591,7 +689,7 @@ async function renderAgendaPanel(el, tab = "agenda"){
     </div>
     <div class="toolbar">
       <div></div>
-      <button class="btn btn-primary btn-sm" onclick="openModal('${tab==='agenda'?'modalAgenda':'modalPengumuman'}')">+ ${tab==='agenda'?'Buat Agenda':'Buat Pengumuman'}</button>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal('${tab==='agenda'?'modalAgenda':'modalPengumuman'}','${tab==='agenda'?'Buat Agenda Kegiatan':'Buat Pengumuman'}')">+ ${tab==='agenda'?'Buat Agenda':'Buat Pengumuman'}</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -605,37 +703,80 @@ async function renderAgendaPanel(el, tab = "agenda"){
     const body = document.getElementById("agendaBody");
     if (tab === "agenda") {
       const rows = await RTApi.listAgenda();
+      window.__agendaCache = rows;
       body.innerHTML = rows.length ? rows.map(r => `
         <tr><td>${r.judul}</td><td>${r.kategori}</td><td>${fmtTanggal(r.tanggalJam)}</td><td>${r.lokasi}</td>
-        <td class="row-actions"><button class="icon-btn" onclick="deleteAgenda('${r.id}')">🗑️</button></td></tr>`).join("")
+        <td class="row-actions">
+          <button class="icon-btn" title="Edit" onclick='editAgenda("${r.id}")'>✏️</button>
+          <button class="icon-btn" title="Salin" onclick='duplicateAgenda("${r.id}")'>📋</button>
+          <button class="icon-btn" title="Hapus" onclick="deleteAgenda('${r.id}')">🗑️</button>
+        </td></tr>`).join("")
         : emptyRow(5,'🗓️','Belum ada agenda kegiatan.');
     } else {
       const rows = await RTApi.listPengumuman();
+      window.__pengumumanCache = rows;
       body.innerHTML = rows.length ? rows.map(r => `
         <tr><td>${fmtTanggal(r.tanggal)}</td><td><span class="badge ${r.tipe==='PENTING'?'badge-danger':'badge-info'}">${r.tipe}</span></td>
         <td>${r.judul}</td><td>${(r.isi||"").slice(0,60)}...</td>
-        <td class="row-actions"><button class="icon-btn" onclick="deletePengumuman('${r.id}')">🗑️</button></td></tr>`).join("")
+        <td class="row-actions">
+          <button class="icon-btn" title="Edit" onclick='editPengumuman("${r.id}")'>✏️</button>
+          <button class="icon-btn" title="Salin" onclick='duplicatePengumuman("${r.id}")'>📋</button>
+          <button class="icon-btn" title="Hapus" onclick="deletePengumuman('${r.id}')">🗑️</button>
+        </td></tr>`).join("")
         : emptyRow(5,'📢','Belum ada pengumuman.');
     }
   } catch (err) {
     document.getElementById("agendaBody").innerHTML = errorRow(5, err);
   }
 }
+function findAgenda(id){ return (window.__agendaCache||[]).find(r => r.id === id); }
+function findPengumuman(id){ return (window.__pengumumanCache||[]).find(r => r.id === id); }
+
+function editAgenda(id){
+  const data = findAgenda(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  openEditModal("modalAgenda", data, "Edit Agenda Kegiatan");
+}
+async function duplicateAgenda(id){
+  const data = findAgenda(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  try {
+    await RTApi.saveAgenda({ ...data, id: undefined, judul: data.judul + " (Salinan)" });
+    toast("Agenda disalin.");
+    renderAgendaPanel(document.getElementById("adminContent"), "agenda");
+  } catch (err) { toast(err.message, "err"); }
+}
+function editPengumuman(id){
+  const data = findPengumuman(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  openEditModal("modalPengumuman", data, "Edit Pengumuman");
+}
+async function duplicatePengumuman(id){
+  const data = findPengumuman(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  try {
+    await RTApi.savePengumuman({ ...data, id: undefined, judul: data.judul + " (Salinan)" });
+    toast("Pengumuman disalin.");
+    renderAgendaPanel(document.getElementById("adminContent"), "pengumuman");
+  } catch (err) { toast(err.message, "err"); }
+}
 async function deleteAgenda(id){ if(!confirm("Hapus agenda ini?"))return; try{ await RTApi.deleteAgenda(id); toast("Agenda dihapus."); renderAgendaPanel(document.getElementById("adminContent"),"agenda"); }catch(err){toast(err.message,"err");} }
 async function deletePengumuman(id){ if(!confirm("Hapus pengumuman ini?"))return; try{ await RTApi.deletePengumuman(id); toast("Pengumuman dihapus."); renderAgendaPanel(document.getElementById("adminContent"),"pengumuman"); }catch(err){toast(err.message,"err");} }
 async function handleSaveAgenda(e){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["judul","kategori","tanggalJam","lokasi"]);
-  data.status = "Terjadwal";
-  await submitEntity(form, () => RTApi.saveAgenda(data), { successMsg: "Agenda tersimpan.", modalId: "modalAgenda" });
+  const data = formToObject(form, ["id","judul","kategori","tanggalJam","lokasi"]);
+  const isEdit = !!data.id;
+  if (!isEdit){ delete data.id; data.status = "Terjadwal"; }
+  await submitEntity(form, () => RTApi.saveAgenda(data), { successMsg: isEdit ? "Perubahan agenda tersimpan." : "Agenda tersimpan.", modalId: "modalAgenda" });
   renderAgendaPanel(document.getElementById("adminContent"), "agenda");
 }
 async function handleSavePengumuman(e){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["tanggal","tipe","judul","isi"]);
-  await submitEntity(form, () => RTApi.savePengumuman(data), { successMsg: "Pengumuman tersimpan.", modalId: "modalPengumuman" });
+  const data = formToObject(form, ["id","tanggal","tipe","judul","isi"]);
+  if (!data.id) delete data.id;
+  await submitEntity(form, () => RTApi.savePengumuman(data), { successMsg: data.id ? "Perubahan pengumuman tersimpan." : "Pengumuman tersimpan.", modalId: "modalPengumuman" });
   renderAgendaPanel(document.getElementById("adminContent"), "pengumuman");
 }
 
