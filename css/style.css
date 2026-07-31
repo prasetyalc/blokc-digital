@@ -324,6 +324,8 @@ tbody tr:hover{background:var(--bg-alt);}
   display:inline-flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-muted); transition:.2s;
 }
 .icon-btn:hover{color:var(--text); border-color:var(--accent);}
+.wa-link{color:var(--success); font-weight:600; white-space:nowrap; transition:opacity .2s ease;}
+.wa-link:hover{opacity:.75; text-decoration:underline;}
 
 /* Footer */
 .footer{border-top:1px solid var(--border); padding:56px 0 28px; background:var(--bg-alt);}
