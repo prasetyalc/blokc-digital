@@ -329,6 +329,7 @@
   <div class="modal modal-wide">
     <div class="modal-head"><h3>Data Profil Warga</h3><button class="modal-close" onclick="closeModal('modalWarga')">✕</button></div>
     <form onsubmit="handleSaveWarga(event)">
+      <input type="hidden" name="id">
       <div class="form-msg err"></div>
       <div class="field-row">
         <div class="field"><label>NIK (16 digit)</label><input name="nik" maxlength="16" required></div>
@@ -352,6 +353,7 @@
   <div class="modal">
     <div class="modal-head"><h3>Catat Pemasukan Kas</h3><button class="modal-close" onclick="closeModal('modalPemasukan')">✕</button></div>
     <form onsubmit="handleSaveKas(event, 'masuk')">
+      <input type="hidden" name="id">
       <div class="form-msg err"></div>
       <div class="field"><label>Nama Pembayar / Sumber Dana</label><input name="namaSumber" required></div>
       <div class="field-row">
@@ -368,6 +370,7 @@
   <div class="modal">
     <div class="modal-head"><h3>Catat Pengeluaran Kas</h3><button class="modal-close" onclick="closeModal('modalPengeluaran')">✕</button></div>
     <form onsubmit="handleSaveKas(event, 'keluar')">
+      <input type="hidden" name="id">
       <div class="form-msg err"></div>
       <div class="field"><label>Keperluan Pengeluaran</label><input name="namaSumber" required></div>
       <div class="field-row">
@@ -384,6 +387,7 @@
   <div class="modal">
     <div class="modal-head"><h3>Data Aset / Barang</h3><button class="modal-close" onclick="closeModal('modalAset')">✕</button></div>
     <form onsubmit="handleSaveAset(event)">
+      <input type="hidden" name="id">
       <div class="form-msg err"></div>
       <div class="field"><label>Nama Barang</label><input name="nama" required></div>
       <div class="field-row">
@@ -400,6 +404,7 @@
   <div class="modal">
     <div class="modal-head"><h3>Data Agenda Kegiatan</h3><button class="modal-close" onclick="closeModal('modalAgenda')">✕</button></div>
     <form onsubmit="handleSaveAgenda(event)">
+      <input type="hidden" name="id">
       <div class="form-msg err"></div>
       <div class="field"><label>Judul Kegiatan</label><input name="judul" required></div>
       <div class="field-row">
@@ -416,6 +421,7 @@
   <div class="modal">
     <div class="modal-head"><h3>Buat Pengumuman</h3><button class="modal-close" onclick="closeModal('modalPengumuman')">✕</button></div>
     <form onsubmit="handleSavePengumuman(event)">
+      <input type="hidden" name="id">
       <div class="form-msg err"></div>
       <div class="field-row">
         <div class="field"><label>Tanggal</label><input name="tanggal" type="date" required></div>
