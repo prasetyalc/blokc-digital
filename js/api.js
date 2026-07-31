@@ -50,6 +50,7 @@ const RTApi = (() => {
 
     // --- Landing page (data publik, read-only) ---
     getLandingData: () => get("getLandingData"),
+    getRecentLayanan: () => get("getRecentLayanan"),
     getSettings: () => get("getSettings"),
 
     // --- Warga ---
