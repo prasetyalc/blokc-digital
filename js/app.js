@@ -1023,4 +1023,35 @@ function showLandingDataError(message){
 }
 function setText(id, val){ const el = document.getElementById(id); if (el) el.textContent = val; }
 
+/* ---------- 20. SLIDER OTOMATIS: PENGAJUAN LAYANAN TERBARU ---------- */
+async function loadLayananSlider(){
+  const mask = document.getElementById("layananSliderMask");
+  const track = document.getElementById("layananSliderTrack");
+  if (!mask || !track) return;
+  try {
+    const rows = await RTApi.getRecentLayanan();
+    if (!rows || !rows.length){
+      mask.closest(".layanan-slider").innerHTML = '<p class="layanan-slider-label">🕒 Belum ada aktivitas pengajuan layanan.</p>';
+      return;
+    }
+    const jenisLabel = { surat: "📄 Surat Pengantar", pinjam: "📦 Peminjaman Aset", aduan: "📢 Pengaduan & Saran" };
+    const statusBadge = { Pending:"badge-warn", Diproses:"badge-info", Selesai:"badge-success", Ditolak:"badge-danger" };
+    const cardHtml = (r) => `
+      <div class="layanan-slider-card">
+        <div class="lsc-top"><span class="lsc-jenis">${jenisLabel[r.jenis] || r.jenis || "Layanan"}</span><span class="badge ${statusBadge[r.status]||'badge-warn'}">${r.status||'Pending'}</span></div>
+        <div class="lsc-nama">${r.nama || "Anonim"}</div>
+        <div class="lsc-detail">${r.detail || "-"}</div>
+        <div class="lsc-date">${fmtTanggal(r.tanggal)}</div>
+      </div>`;
+    // Digandakan supaya animasi loop terlihat mulus tanpa jeda
+    const html = rows.map(cardHtml).join("") + rows.map(cardHtml).join("");
+    track.innerHTML = html;
+    track.style.setProperty("--slide-duration", Math.max(18, rows.length * 4) + "s");
+  } catch (err) {
+    console.warn("Gagal memuat slider layanan:", err.message);
+    mask.closest(".layanan-slider").innerHTML = '<p class="layanan-slider-label">🕒 Aktivitas layanan belum dapat dimuat.</p>';
+  }
+}
+document.addEventListener("DOMContentLoaded", loadLayananSlider);
+
 document.addEventListener("DOMContentLoaded", loadLandingData);
