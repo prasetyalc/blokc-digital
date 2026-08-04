@@ -6,7 +6,7 @@
 
 // GANTI dengan URL Web App hasil deploy Apps Script kamu, contoh:
 // "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxx/exec"
-const API_URL = "https://script.google.com/macros/s/AKfycbzYjJCrZ9zX36IPIZRKPUda8iwDgyiea3anAIGUrHhqsjmXHcWbXp_4C33mhC_8atyp/exec";
+const API_URL = "PASTE_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
 
 const RTApi = (() => {
 
@@ -73,7 +73,7 @@ const RTApi = (() => {
     deleteAset: (id) => post("deleteAset", { id }),
 
     // --- Layanan (surat / peminjaman / pengaduan) ---
-    listLayanan: (jenis) => get("listLayanan", { jenis }),
+    listLayanan: (jenis) => get("listLayanan", jenis ? { jenis } : {}),
     submitLayanan: (jenis, data) => post("submitLayanan", { jenis, data }), // publik, tanpa token
     updateLayananStatus: (jenis, id, status, extra = {}) => post("updateLayananStatus", { jenis, id, status, ...extra }),
 
