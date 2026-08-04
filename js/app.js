@@ -222,6 +222,11 @@ function formToObject(form, fields){
   fields.forEach((f) => { if (form[f] !== undefined) data[f] = form[f].value; });
   return data;
 }
+function linkifyWaMessage(text){
+  const escaped = String(text)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return escaped.replace(/wa\.me\/(\d+)/g, '<a href="https://wa.me/$1" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline; font-weight:600;">wa.me/$1</a>');
+}
 async function submitEntity(form, apiCall, { successMsg, modalId, reloadPanel }){
   const msg = form.querySelector(".form-msg");
   const btn = form.querySelector('button[type="submit"], .btn-primary');
@@ -235,7 +240,7 @@ async function submitEntity(form, apiCall, { successMsg, modalId, reloadPanel })
     if (form.id !== undefined && form.querySelector('[name="id"]')) form.querySelector('[name="id"]').value = "";
     if (reloadPanel) loadAdminPanel(reloadPanel);
   } catch (err) {
-    if (msg){ msg.textContent = err.message; msg.className = "form-msg err show"; }
+    if (msg){ msg.innerHTML = linkifyWaMessage(err.message); msg.className = "form-msg err show"; }
     else toast(err.message, "err");
   } finally {
     if (btn){ btn.disabled = false; btn.textContent = originalLabel; }
@@ -677,6 +682,12 @@ async function handleSubmitLayanan(e, jenis, modalId){
   e.preventDefault();
   const form = e.target;
   const data = formToObject(form, ["nama","nik","noRumah","noHp","detail"]);
+  const msg = form.querySelector(".form-msg");
+  const noRumahPattern = /^C\d+\/\d{2}$/i;
+  if (!noRumahPattern.test((data.noRumah || "").trim())) {
+    if (msg){ msg.textContent = "Format nomor rumah tidak valid. Gunakan format seperti C1/09."; msg.className = "form-msg err show"; }
+    return;
+  }
   await submitEntity(form, () => RTApi.submitLayanan(jenis, data), { successMsg: "Permohonan terkirim ke pengurus, terima kasih.", modalId });
 }
 
