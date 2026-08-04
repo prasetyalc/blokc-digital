@@ -269,6 +269,12 @@ function fmtTanggalLengkap(d){
   if (isNaN(date)) return String(d);
   return date.toLocaleDateString("id-ID", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
 }
+function fmtTanggalPanjang(d){
+  if (!d) return "-";
+  const date = new Date(d);
+  if (isNaN(date)) return String(d);
+  return date.toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
+}
 function emptyRow(colspan, icon, text){
   return `<tr><td colspan="${colspan}"><div class="empty-state"><div class="es-ic">${icon}</div>${text}</div></td></tr>`;
 }
@@ -763,9 +769,9 @@ async function renderAgendaPanel(el, tab = "agenda"){
     <div class="table-wrap">
       <table>
         ${tab==='agenda'
-          ? '<thead><tr><th>Judul</th><th>Kategori</th><th>Tanggal</th><th>Lokasi</th><th>Aksi</th></tr></thead>'
-          : '<thead><tr><th>Tanggal</th><th>Tipe</th><th>Judul</th><th>Isi</th><th>Aksi</th></tr></thead>'}
-        <tbody id="agendaBody">${emptyRow(5,'⏳','Memuat data...')}</tbody>
+          ? '<thead><tr><th>Judul</th><th>Kategori</th><th>Tanggal</th><th>Waktu</th><th>Lokasi</th><th>Aksi</th></tr></thead>'
+          : '<thead><tr><th>Tanggal</th><th>Waktu</th><th>Tipe</th><th>Judul</th><th>Isi</th><th>Aksi</th></tr></thead>'}
+        <tbody id="agendaBody">${emptyRow(6,'⏳','Memuat data...')}</tbody>
       </table>
     </div>`;
   try {
@@ -774,28 +780,28 @@ async function renderAgendaPanel(el, tab = "agenda"){
       const rows = await RTApi.listAgenda();
       window.__agendaCache = rows;
       body.innerHTML = rows.length ? rows.map(r => `
-        <tr><td>${r.judul}</td><td>${r.kategori}</td><td>${fmtTanggal(r.tanggalJam)}</td><td>${r.lokasi}</td>
+        <tr><td>${r.judul}</td><td>${r.kategori}</td><td>${fmtTanggal(r.tanggalJam)}</td><td>${r.waktu ? r.waktu + ' WIB' : '-'}</td><td>${r.lokasi}</td>
         <td class="row-actions">
           <button class="icon-btn" title="Edit" onclick='editAgenda("${r.id}")'>✏️</button>
           <button class="icon-btn" title="Salin" onclick='duplicateAgenda("${r.id}")'>📋</button>
           <button class="icon-btn" title="Hapus" onclick="deleteAgenda('${r.id}')">🗑️</button>
         </td></tr>`).join("")
-        : emptyRow(5,'🗓️','Belum ada agenda kegiatan.');
+        : emptyRow(6,'🗓️','Belum ada agenda kegiatan.');
     } else {
       const rows = await RTApi.listPengumuman();
       window.__pengumumanCache = rows;
       body.innerHTML = rows.length ? rows.map(r => `
-        <tr><td>${fmtTanggal(r.tanggal)}</td><td><span class="badge ${r.tipe==='PENTING'?'badge-danger':'badge-info'}">${r.tipe}</span></td>
+        <tr><td>${fmtTanggal(r.tanggal)}</td><td>${r.waktu ? r.waktu + ' WIB' : '-'}</td><td><span class="badge ${r.tipe==='PENTING'?'badge-danger':'badge-info'}">${r.tipe}</span></td>
         <td>${r.judul}</td><td>${(r.isi||"").slice(0,60)}...</td>
         <td class="row-actions">
           <button class="icon-btn" title="Edit" onclick='editPengumuman("${r.id}")'>✏️</button>
           <button class="icon-btn" title="Salin" onclick='duplicatePengumuman("${r.id}")'>📋</button>
           <button class="icon-btn" title="Hapus" onclick="deletePengumuman('${r.id}')">🗑️</button>
         </td></tr>`).join("")
-        : emptyRow(5,'📢','Belum ada pengumuman.');
+        : emptyRow(6,'📢','Belum ada pengumuman.');
     }
   } catch (err) {
-    document.getElementById("agendaBody").innerHTML = errorRow(5, err);
+    document.getElementById("agendaBody").innerHTML = errorRow(6, err);
   }
 }
 function findAgenda(id){ return (window.__agendaCache||[]).find(r => r.id === id); }
@@ -804,7 +810,11 @@ function findPengumuman(id){ return (window.__pengumumanCache||[]).find(r => r.i
 function editAgenda(id){
   const data = findAgenda(id);
   if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
-  openEditModal("modalAgenda", data, "Edit Agenda Kegiatan");
+  // Pecah tanggalJam (tersimpan gabungan) jadi field tanggal + waktu terpisah untuk mengisi form
+  const dt = new Date(data.tanggalJam);
+  const tanggal = !isNaN(dt) ? dt.toISOString().slice(0,10) : "";
+  const waktu = data.waktu || (!isNaN(dt) ? String(dt.getHours()).padStart(2,"0") + ":" + String(dt.getMinutes()).padStart(2,"0") : "");
+  openEditModal("modalAgenda", { ...data, tanggal, waktu }, "Edit Agenda Kegiatan");
 }
 async function duplicateAgenda(id){
   const data = findAgenda(id);
@@ -834,16 +844,18 @@ async function deletePengumuman(id){ if(!confirm("Hapus pengumuman ini?"))return
 async function handleSaveAgenda(e){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["id","judul","kategori","tanggalJam","lokasi"]);
+  const data = formToObject(form, ["id","judul","kategori","tanggal","waktu","lokasi"]);
   const isEdit = !!data.id;
   if (!isEdit){ delete data.id; data.status = "Terjadwal"; }
+  data.tanggalJam = data.tanggal && data.waktu ? `${data.tanggal}T${data.waktu}` : data.tanggal;
+  delete data.tanggal;
   await submitEntity(form, () => RTApi.saveAgenda(data), { successMsg: isEdit ? "Perubahan agenda tersimpan." : "Agenda tersimpan.", modalId: "modalAgenda" });
   renderAgendaPanel(document.getElementById("adminContent"), "agenda");
 }
 async function handleSavePengumuman(e){
   e.preventDefault();
   const form = e.target;
-  const data = formToObject(form, ["id","tanggal","tipe","judul","isi"]);
+  const data = formToObject(form, ["id","tanggal","waktu","tipe","judul","isi"]);
   if (!data.id) delete data.id;
   await submitEntity(form, () => RTApi.savePengumuman(data), { successMsg: data.id ? "Perubahan pengumuman tersimpan." : "Pengumuman tersimpan.", modalId: "modalPengumuman" });
   renderAgendaPanel(document.getElementById("adminContent"), "pengumuman");
@@ -1056,18 +1068,19 @@ async function loadLandingData(){
       jadwal.innerHTML = d.agenda?.length ? d.agenda.slice(0,5).map(a => {
         const dt = new Date(a.tanggalJam);
         return `<div class="list-row"><div class="list-date"><b>${isNaN(dt)?'-':dt.getDate()}</b><span>${isNaN(dt)?'-':dt.toLocaleDateString('id-ID',{month:'short'})}</span><small>${isNaN(dt)?'':dt.getFullYear()}</small></div>
-        <div class="list-body"><h4>${a.judul}</h4><p>${a.lokasi||''}</p></div><span class="badge badge-info">${a.status||'Terjadwal'}</span></div>`;
+        <div class="list-body"><h4>${a.judul}</h4><p>${a.lokasi||''}${a.waktu ? ' · ' + a.waktu + ' WIB' : ''}</p></div><span class="badge badge-info">${a.status||'Terjadwal'}</span></div>`;
       }).join("") : emptyRow(1,'🗓️','Belum ada agenda terjadwal.');
     }
     const upcoming = (d.agenda||[])
       .filter(a => !isNaN(new Date(a.tanggalJam)) && new Date(a.tanggalJam) >= new Date())
       .sort((a,b) => new Date(a.tanggalJam) - new Date(b.tanggalJam))[0];
     setText("fcAgenda", upcoming ? upcoming.judul : "Belum ada agenda");
+    setText("fcAgendaDate", upcoming ? `${fmtTanggalPanjang(upcoming.tanggalJam)}${upcoming.waktu ? ' · ' + upcoming.waktu + ' WIB' : ''}` : "");
 
     const peng = document.getElementById("listPengumuman");
     if (peng && d.pengumuman?.length) peng.innerHTML = d.pengumuman.slice(0,3).map(p => `
       <div class="card"><span class="badge ${p.tipe==='PENTING'?'badge-danger':'badge-info'}">${p.tipe||'Info'}</span>
-      <p class="pengumuman-date">${fmtTanggalLengkap(p.tanggal)}</p>
+      <p class="pengumuman-date">${fmtTanggalLengkap(p.tanggal)}${p.waktu ? ' · ' + p.waktu + ' WIB' : ''}</p>
       <h3 style="margin-top:6px;">${p.judul}</h3><p>${(p.isi||'').slice(0,120)}</p></div>`).join("");
   } catch (err) {
     console.warn("Gagal memuat data landing page:", err.message);
@@ -1077,7 +1090,7 @@ async function loadLandingData(){
     setText("fcSaldo", fmtRupiah(0)); setText("fpSaldo", fmtRupiah(0));
     setText("fpMasuk", fmtRupiah(0)); setText("fpKeluar", fmtRupiah(0));
     setText("fcIuran", "0/0 KK"); setText("fpIuranPct", "0%");
-    setText("fcAgenda", "Belum ada agenda");
+    setText("fcAgenda", "Belum ada agenda"); setText("fcAgendaDate", "");
   }
 }
 function showLandingDataError(message){
