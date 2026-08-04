@@ -6,7 +6,7 @@
 
 // GANTI dengan URL Web App hasil deploy Apps Script kamu, contoh:
 // "https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxx/exec"
-const API_URL = "PASTE_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
+const API_URL = "https://script.google.com/macros/s/AKfycbzYjJCrZ9zX36IPIZRKPUda8iwDgyiea3anAIGUrHhqsjmXHcWbXp_4C33mhC_8atyp/exec";
 
 const RTApi = (() => {
 
