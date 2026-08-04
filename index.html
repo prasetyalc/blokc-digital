@@ -80,6 +80,7 @@
         <div class="float-card card-03">
           <div class="fc-label">Agenda Terdekat</div>
           <div class="fc-value" style="font-size:16px;" id="fcAgenda"><span class="skeleton" style="width:120px;height:1em;display:inline-block;"></span></div>
+          <div class="fc-agenda-date" id="fcAgendaDate"></div>
         </div>
       </div>
     </div>
@@ -427,9 +428,12 @@
       <div class="field"><label>Judul Kegiatan</label><input name="judul" required></div>
       <div class="field-row">
         <div class="field"><label>Kategori</label><select name="kategori"><option>Kerja Bakti</option><option>Rapat</option><option>Lainnya</option></select></div>
-        <div class="field"><label>Tanggal / Jam</label><input name="tanggalJam" type="datetime-local" required></div>
+        <div class="field"><label>Tanggal</label><input name="tanggal" type="date" required></div>
       </div>
-      <div class="field"><label>Lokasi</label><input name="lokasi" required></div>
+      <div class="field-row">
+        <div class="field"><label>Waktu (WIB)</label><input name="waktu" type="time" required></div>
+        <div class="field"><label>Lokasi</label><input name="lokasi" required></div>
+      </div>
       <button class="btn btn-primary btn-full">Simpan Agenda</button>
     </form>
   </div>
@@ -443,8 +447,9 @@
       <div class="form-msg err"></div>
       <div class="field-row">
         <div class="field"><label>Tanggal</label><input name="tanggal" type="date" required></div>
-        <div class="field"><label>Tipe</label><select name="tipe"><option>Info</option><option>PENTING</option></select></div>
+        <div class="field"><label>Waktu (WIB)</label><input name="waktu" type="time" required></div>
       </div>
+      <div class="field"><label>Tipe</label><select name="tipe"><option>Info</option><option>PENTING</option></select></div>
       <div class="field"><label>Judul Pengumuman</label><input name="judul" required></div>
       <div class="field"><label>Isi Pengumuman</label><textarea name="isi" rows="4" required></textarea></div>
       <button class="btn btn-primary btn-full">Terbitkan</button>
