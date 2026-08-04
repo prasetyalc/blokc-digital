@@ -129,6 +129,9 @@ function enterAdmin(user){
   document.getElementById("adminUserName").textContent = user?.fullname || "Admin";
   document.getElementById("adminUserRole").textContent = user?.role || "Staff";
   loadAdminPanel("dashboard");
+  refreshAdminNotifications();
+  clearInterval(__notifTimer);
+  __notifTimer = setInterval(refreshAdminNotifications, 60000); // cek permohonan baru tiap 60 detik
 }
 
 function logoutAdmin(){
@@ -137,6 +140,7 @@ function logoutAdmin(){
   localStorage.removeItem("rt_user");
   document.body.classList.remove("admin-mode");
   document.getElementById("adminApp").classList.remove("is-active");
+  clearInterval(__notifTimer);
   toast("Berhasil keluar dari panel admin.");
 }
 
@@ -190,8 +194,62 @@ function toggleAdminSidebar(){
   sidebar.classList.contains("is-open") ? closeAdminSidebar() : openAdminSidebar();
 }
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeAdminSidebar();
+  if (e.key === "Escape") { closeAdminSidebar(); closeNotifDropdown(); }
 });
+
+/* ---------- 8b. NOTIFIKASI ADMIN: permohonan layanan baru ---------- */
+let __notifTimer = null;
+const NOTIF_JENIS_LABEL = { surat: "📄 Permohonan Surat Baru", pinjam: "📦 Peminjaman Aset Baru", aduan: "📢 Pengaduan & Saran Baru" };
+
+function toggleNotifDropdown(){
+  const dd = document.getElementById("notifDropdown");
+  if (!dd) return;
+  dd.classList.contains("show") ? closeNotifDropdown() : (dd.classList.add("show"), refreshAdminNotifications());
+}
+function closeNotifDropdown(){
+  document.getElementById("notifDropdown")?.classList.remove("show");
+}
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".notif-wrap")) closeNotifDropdown();
+});
+
+async function refreshAdminNotifications(){
+  const dot = document.getElementById("notifDot");
+  const list = document.getElementById("notifList");
+  if (!dot || !list) return; // belum login / bukan di panel admin
+  try {
+    const rows = await RTApi.listLayanan();
+    const pending = (rows || []).filter(r => (r.status || "Pending") === "Pending");
+    const counts = { surat: 0, pinjam: 0, aduan: 0 };
+    pending.forEach(r => { if (counts[r.jenis] !== undefined) counts[r.jenis]++; });
+    dot.style.display = pending.length > 0 ? "block" : "none";
+
+    if (!pending.length){
+      list.innerHTML = '<div class="notif-empty">Tidak ada permohonan baru 🎉</div>';
+      return;
+    }
+    const recent = [...pending].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    let html = Object.entries(counts).filter(([,c]) => c > 0).map(([jenis, c]) => `
+      <button class="notif-row" onclick="goToLayanan('${jenis}')">
+        <span>${NOTIF_JENIS_LABEL[jenis] || jenis}</span><span class="notif-count">${c} baru</span>
+      </button>`).join("");
+    html += '<div class="notif-divider"></div><div class="notif-subhead">Masuk Terbaru</div>';
+    html += recent.map(r => `
+      <div class="notif-item"><b>${r.nama || "Anonim"}</b><span>${NOTIF_JENIS_LABEL[r.jenis] || r.jenis} · ${fmtTanggal(r.createdAt)}</span></div>`).join("");
+    list.innerHTML = html;
+  } catch (err) {
+    list.innerHTML = `<div class="notif-empty">Gagal memuat notifikasi.</div>`;
+    console.warn("Gagal memuat notifikasi admin:", err.message);
+  }
+}
+function goToLayanan(jenis){
+  document.querySelectorAll(".admin-nav a").forEach((a) => a.classList.toggle("active", a.dataset.panel === "layanan"));
+  const titleEl = document.getElementById("adminTopbarTitle");
+  if (titleEl) titleEl.textContent = ADMIN_PANELS.layanan.title;
+  closeAdminSidebar();
+  closeNotifDropdown();
+  renderLayananPanel(document.getElementById("adminContent"), jenis);
+}
 
 /* ---------- 9. HELPERS UMUM ---------- */
 const BULAN_ID = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
@@ -675,7 +733,7 @@ async function renderLayananPanel(el, jenis = "surat"){
   }
 }
 async function updateLayananStatus(id, jenis, status){
-  try { await RTApi.updateLayananStatus(jenis, id, status); toast("Status permohonan diperbarui."); }
+  try { await RTApi.updateLayananStatus(jenis, id, status); toast("Status permohonan diperbarui."); refreshAdminNotifications(); }
   catch (err){ toast(err.message, "err"); }
 }
 async function handleSubmitLayanan(e, jenis, modalId){
