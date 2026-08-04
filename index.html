@@ -322,6 +322,16 @@
         <h2 id="adminTopbarTitle">Dashboard</h2>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
+        <div class="notif-wrap">
+          <button class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown()" aria-label="Notifikasi permohonan masuk">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 4.5 1.5 6 2 7H4c.5-1 2-2.5 2-7Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+            <span class="notif-dot" id="notifDot" style="display:none;"></span>
+          </button>
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-dropdown-head">🔔 Permohonan Masuk</div>
+            <div id="notifList"><div class="notif-empty">Memuat...</div></div>
+          </div>
+        </div>
         <button class="theme-toggle" onclick="toggleTheme()" aria-label="Ganti mode gelap/terang">
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
