@@ -19,7 +19,7 @@
   <!-- NAV -->
   <nav class="nav" id="mainNav">
     <div class="container">
-      <a href="https://blokc-digital.vercel.app/" rel="noopener noreferrer" class="brand">
+      <a href="https://blokc-digital.vercel.app/" target="_blank" rel="noopener noreferrer" class="brand">
         <span class="brand-mark"><img id="siteLogoNav" src="assets/logo.png" alt="Logo RT03RW05 DIGITAL"></span>
         <span><span id="siteNameNav">RT03RW05</span><br><small id="siteTaglineNav">DIGITAL</small></span>
       </a>
@@ -202,11 +202,11 @@
   <footer class="footer">
     <div class="container">
       <div>
-        <a href="https://blokc-digital.vercel.app/" rel="noopener noreferrer" class="brand" style="margin-bottom:10px;"><span class="brand-mark"><img id="siteLogoFooter" src="assets/logo.png" alt="Logo RT03RW05 DIGITAL"></span><span><span id="siteNameFooter">RT03RW05</span><br><small id="siteTaglineFooter">DIGITAL</small></span></a>
+        <a href="https://blokc-digital.vercel.app/" target="_blank" rel="noopener noreferrer" class="brand" style="margin-bottom:10px;"><span class="brand-mark"><img id="siteLogoFooter" src="assets/logo.png" alt="Logo RT03RW05 DIGITAL"></span><span><span id="siteNameFooter">RT03RW05</span><br><small id="siteTaglineFooter">DIGITAL</small></span></a>
         <p id="siteDescFooter" style="color:var(--text-muted); font-size:13.5px; max-width:280px;">Platform informasi & keuangan warga RT 03 / RW 05.</p>
       </div>
       <div class="footer-links">
-        <a href="https://blokc-digital.vercel.app/">Tentang Kami</a>
+        <a href="#">Tentang Kami</a>
         <a href="https://danangadhi.vercel.app/" target="_blank" rel="noopener noreferrer">Hubungi Kami</a>
       </div>
     </div>
@@ -243,8 +243,9 @@
       <div class="field"><label>Nama Lengkap</label><input name="nama" required></div>
       <div class="field-row">
         <div class="field"><label>NIK Warga</label><input name="nik" required></div>
-        <div class="field"><label>No. Rumah / Blok</label><input name="noRumah" required></div>
+        <div class="field"><label>No. Rumah / Blok</label><input name="noRumah" placeholder="Contoh: C1/09" required></div>
       </div>
+      <p class="field-hint" style="margin-top:-10px;">Format nomor rumah: C[nomor]/[nomor], contoh C1/09 — harus sudah terdaftar di data warga.</p>
       <div class="field"><label>Nomor WhatsApp Aktif</label><input name="noHp" required></div>
       <div class="field"><label>Keperluan Pembuatan Surat</label><textarea name="detail" rows="3" required></textarea></div>
       <button class="btn btn-primary btn-full">Kirim Permohonan</button>
@@ -261,7 +262,7 @@
         <div class="field"><label>Nama Peminjam</label><input name="nama" required></div>
         <div class="field"><label>No. WhatsApp</label><input name="noHp" required></div>
       </div>
-      <div class="field"><label>Nomor Rumah</label><input name="noRumah" required></div>
+      <div class="field"><label>Nomor Rumah</label><input name="noRumah" placeholder="Contoh: C1/09" required><p class="field-hint">Format: C[nomor]/[nomor], contoh C1/09 — harus sudah terdaftar di data warga.</p></div>
       <div class="field"><label>Detail Keperluan (aset, tanggal pinjam & kembali)</label><textarea name="detail" rows="3" required placeholder="Contoh: Pinjam 20 kursi, 10-12 Agustus 2026"></textarea></div>
       <button class="btn btn-primary btn-full">Kirim Permohonan</button>
     </form>
@@ -273,10 +274,10 @@
     <div class="modal-head"><h3>📢 Pengaduan &amp; Saran Warga</h3><button class="modal-close" onclick="closeModal('modalAdukan')">✕</button></div>
     <form onsubmit="handleSubmitLayanan(event, 'aduan', 'modalAdukan')">
       <div class="form-msg err"></div>
-      <div class="field"><label>Nama Lengkap (kosongkan jika anonim)</label><input name="nama"></div>
+      <div class="field"><label>Nama Lengkap (opsional, boleh dikosongkan)</label><input name="nama"></div>
       <div class="field"><label>No. WhatsApp</label><input name="noHp"></div>
-      <div class="field"><label>Lokasi Kejadian</label><input name="noRumah"></div>
-      <div class="field"><label>Detail Pengaduan / Masukan</label><textarea name="detail" rows="3" required></textarea></div>
+      <div class="field"><label>No. Rumah Anda</label><input name="noRumah" placeholder="Contoh: C1/09" required><p class="field-hint">Format: C[nomor]/[nomor], contoh C1/09 — untuk verifikasi bahwa Anda warga terdaftar. Nama tetap boleh dikosongkan jika ingin anonim.</p></div>
+      <div class="field"><label>Detail Pengaduan / Masukan</label><textarea name="detail" rows="3" required placeholder="Sertakan lokasi kejadian jika relevan, mis. dekat Pos Ronda Blok C"></textarea></div>
       <button class="btn btn-primary btn-full">Kirim</button>
     </form>
   </div>
