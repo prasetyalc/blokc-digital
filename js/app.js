@@ -1204,10 +1204,14 @@ async function loadLayananSlider(){
 document.addEventListener("DOMContentLoaded", loadLayananSlider);
 
 /* ---------- 21. SLIDER VIDEO: MOMEN KEBERSAMAAN WARGA ---------- */
+let __videoAutoScrollRAF = null;
+let __videoAutoScrollPaused = false;
+let __videoSliderHalfWidth = 0;
+
 async function loadVideoSlider(){
-  const mask = document.getElementById("videoSliderMask");
+  const scrollEl = document.getElementById("videoSliderScroll");
   const track = document.getElementById("videoSliderTrack");
-  if (!mask || !track) return;
+  if (!scrollEl || !track) return;
   try {
     const rows = await RTApi.listVideo();
     if (!rows || !rows.length){
@@ -1216,21 +1220,96 @@ async function loadVideoSlider(){
     }
     const cardHtml = (r) => `
       <div class="video-card" data-video-id="${r.videoId}">
-        <div class="video-card-thumb" onmouseenter="playVideoCard(this)" onclick="playVideoCard(this)">
-          <img src="https://img.youtube.com/vi/${r.videoId}/hqdefault.jpg" alt="${r.judul}" loading="lazy">
+        <div class="video-card-thumb" onmouseenter="if(window.matchMedia('(hover:hover) and (pointer:fine)').matches) playVideoCard(this)" onclick="playVideoCard(this)">
+          <img src="https://img.youtube.com/vi/${r.videoId}/hqdefault.jpg" alt="${r.judul}" loading="lazy" draggable="false">
           <div class="video-play-btn">▶</div>
         </div>
         <div class="video-card-title">${r.judul}</div>
       </div>`;
-    // Digandakan supaya animasi loop terlihat mulus tanpa jeda
+    // Digandakan supaya loop auto-scroll terlihat mulus tanpa jeda/putus
     track.innerHTML = rows.map(cardHtml).join("") + rows.map(cardHtml).join("");
-    track.style.setProperty("--slide-duration", Math.max(30, rows.length * 8) + "s");
+    requestAnimationFrame(() => {
+      __videoSliderHalfWidth = track.scrollWidth / 2;
+      initVideoSliderInteractions();
+      startVideoAutoScroll();
+    });
   } catch (err) {
     console.warn("Gagal memuat slider video:", err.message);
     document.getElementById("videoSliderWrap").innerHTML = '<p class="layanan-slider-label">🎬 Video belum dapat dimuat.</p>';
   }
 }
+
+function isAnyVideoPlaying(){
+  return !!document.querySelector("#videoSliderTrack iframe");
+}
+
+function startVideoAutoScroll(){
+  const scrollEl = document.getElementById("videoSliderScroll");
+  if (!scrollEl) return;
+  cancelAnimationFrame(__videoAutoScrollRAF);
+  const step = () => {
+    if (!__videoAutoScrollPaused && !isAnyVideoPlaying()){
+      scrollEl.scrollLeft += 0.6;
+      if (__videoSliderHalfWidth && scrollEl.scrollLeft >= __videoSliderHalfWidth){
+        scrollEl.scrollLeft -= __videoSliderHalfWidth; // lompat mulus ke salinan pertama (looping)
+      }
+    }
+    __videoAutoScrollRAF = requestAnimationFrame(step);
+  };
+  __videoAutoScrollRAF = requestAnimationFrame(step);
+}
+
+function initVideoSliderInteractions(){
+  const scrollEl = document.getElementById("videoSliderScroll");
+  const wrap = document.getElementById("videoSliderWrap");
+  if (!scrollEl || scrollEl.dataset.bound) return;
+  scrollEl.dataset.bound = "1";
+
+  // Berhenti otomatis saat kursor/jari berada di area slider (hover desktop, sentuh mobile)
+  scrollEl.addEventListener("mouseenter", () => { __videoAutoScrollPaused = true; });
+  scrollEl.addEventListener("mouseleave", () => { if (!isDraggingVideoSlider) __videoAutoScrollPaused = false; });
+  scrollEl.addEventListener("touchstart", () => { __videoAutoScrollPaused = true; }, { passive:true });
+  scrollEl.addEventListener("touchend", () => {
+    // beri jeda sedikit sebelum lanjut auto-scroll lagi, supaya tap-to-play tidak keburu ke-geser
+    setTimeout(() => { if (!isAnyVideoPlaying()) __videoAutoScrollPaused = false; }, 1500);
+  }, { passive:true });
+
+  // Drag-to-scroll pakai mouse (desktop)
+  let startX = 0, startScroll = 0;
+  scrollEl.addEventListener("mousedown", (e) => {
+    isDraggingVideoSlider = true;
+    __videoAutoScrollPaused = true;
+    scrollEl.classList.add("is-dragging");
+    startX = e.pageX;
+    startScroll = scrollEl.scrollLeft;
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!isDraggingVideoSlider) return;
+    scrollEl.scrollLeft = startScroll - (e.pageX - startX);
+  });
+  window.addEventListener("mouseup", () => {
+    if (!isDraggingVideoSlider) return;
+    isDraggingVideoSlider = false;
+    scrollEl.classList.remove("is-dragging");
+    setTimeout(() => { if (!isAnyVideoPlaying()) __videoAutoScrollPaused = false; }, 1200);
+  });
+
+  // Tombol panah kiri/kanan
+  document.getElementById("videoSliderPrev")?.addEventListener("click", () => {
+    __videoAutoScrollPaused = true;
+    scrollEl.scrollBy({ left: -340, behavior: "smooth" });
+    setTimeout(() => { if (!isAnyVideoPlaying()) __videoAutoScrollPaused = false; }, 2000);
+  });
+  document.getElementById("videoSliderNext")?.addEventListener("click", () => {
+    __videoAutoScrollPaused = true;
+    scrollEl.scrollBy({ left: 340, behavior: "smooth" });
+    setTimeout(() => { if (!isAnyVideoPlaying()) __videoAutoScrollPaused = false; }, 2000);
+  });
+}
+let isDraggingVideoSlider = false;
+
 function playVideoCard(thumbEl){
+  __videoAutoScrollPaused = true; // pastikan slider berhenti total selama video diputar
   if (thumbEl.querySelector("iframe")) return; // sudah main, tidak perlu diulang
   const videoId = thumbEl.closest(".video-card")?.dataset.videoId;
   if (!videoId) return;
@@ -1238,13 +1317,15 @@ function playVideoCard(thumbEl){
     <button class="video-card-close" onclick="event.stopPropagation(); stopVideoCard(this.closest('.video-card-thumb'))" aria-label="Tutup video">✕</button>
     <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1"
       allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-  thumbEl.onmouseleave = () => stopVideoCard(thumbEl);
 }
 function stopVideoCard(thumbEl){
   const videoId = thumbEl.closest(".video-card")?.dataset.videoId;
   if (!videoId) return;
-  thumbEl.onmouseleave = null;
-  thumbEl.innerHTML = `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" alt="" loading="lazy"><div class="video-play-btn">▶</div>`;
+  thumbEl.innerHTML = `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" alt="" loading="lazy" draggable="false"><div class="video-play-btn">▶</div>`;
+  thumbEl.onmouseenter = () => { if (window.matchMedia("(hover:hover) and (pointer:fine)").matches) playVideoCard(thumbEl); };
+  thumbEl.onclick = () => playVideoCard(thumbEl);
+  // lanjutkan auto-scroll lagi kalau memang tidak ada video lain yang masih main
+  setTimeout(() => { if (!isAnyVideoPlaying()) __videoAutoScrollPaused = false; }, 800);
 }
 document.addEventListener("DOMContentLoaded", loadVideoSlider);
 
