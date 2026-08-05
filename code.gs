@@ -37,8 +37,8 @@ const SCHEMAS = {
   Iuran: ["id","wargaId","bulan","tahun","lunas","tanggalBayar","nominal"],
   Aset: ["id","nama","kategori","jumlahTotal","jumlahTersedia","kondisi","keterangan","fotoUrl","createdAt"],
   Layanan: ["id","jenis","nama","nik","noRumah","noHp","detail","status","nomorSurat","tanggal","createdAt"],
-  Agenda: ["id","judul","kategori","tanggalJam","lokasi","status","laporanUrl","notulenUrl","createdAt"],
-  Pengumuman: ["id","tanggal","tipe","judul","isi","createdAt"],
+  Agenda: ["id","judul","kategori","tanggalJam","waktu","lokasi","status","laporanUrl","notulenUrl","createdAt"],
+  Pengumuman: ["id","tanggal","waktu","tipe","judul","isi","createdAt"],
   Petugas: ["id","fullname","username","passwordHash","role","createdAt"],
   Audit: ["id","waktu","petugas","aksi","detail"],
   Settings: ["key","value"],
@@ -51,6 +51,8 @@ function setupSheets(){
     let sh = SS.getSheetByName(name);
     if (!sh) sh = SS.insertSheet(name);
     if (sh.getLastRow() === 0) sh.appendRow(cols);
+    else ensureColumns_(name, cols); // migrasi: tambahkan kolom baru yang belum ada di sheet lama
+    formatWaktuColumnAsText_(name); // cegah/​perbaiki kolom "waktu" ke-convert jadi Date/Time oleh Sheets
   });
   // Akun admin default (username: admin / password: bismillah)
   const petugas = SS.getSheetByName(SHEETS.PETUGAS);
@@ -60,10 +62,49 @@ function setupSheets(){
   const settings = SS.getSheetByName(SHEETS.SETTINGS);
   if (settings.getLastRow() < 2) {
     settings.appendRow(["namaRtRw", "RT03RW05 DIGITAL"]);
+    settings.appendRow(["tagline", "DIGITAL"]);
     settings.appendRow(["nominalIuran", "20000"]);
+    settings.appendRow(["wilayahTag", "WILAYAH RT 03 / RW 05"]);
     settings.appendRow(["heroTitle", "Bersama Warga, Membangun Lingkungan yang Nyaman dan Harmonis"]);
+    settings.appendRow(["heroLead", "Satu portal digital untuk komunikasi, transparansi keuangan kas, dan pelayanan administrasi warga — cepat, terbuka, dan mudah diakses kapan saja."]);
+    settings.appendRow(["siteDesc", "Platform informasi & keuangan warga RT 03 / RW 05."]);
+    settings.appendRow(["copyrightText", "© 2026 RT03RW05 DIGITAL. Seluruh hak cipta dilindungi."]);
   }
   Logger.log("Setup selesai. Sheet default & akun admin siap dipakai.");
+}
+
+/* Format seluruh kolom "waktu" (kalau ada) sebagai teks polos (@), termasuk baris yang sudah
+   terlanjur ada. Ini men-supply perbaikan cepat untuk bug Google Sheets yang otomatis mengubah
+   nilai seperti "12:52" jadi objek Date/Time internal. Aman dijalankan berkali-kali. */
+function formatWaktuColumnAsText_(sheetName){
+  const sh = SS.getSheetByName(sheetName);
+  if (!sh) return;
+  const lastCol = sh.getLastColumn();
+  if (!lastCol) return;
+  const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  const waktuColIdx = headers.indexOf("waktu");
+  if (waktuColIdx === -1) return;
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) { sh.getRange(1, waktuColIdx + 1, Math.max(lastRow,1), 1).setNumberFormat("@"); return; }
+  const range = sh.getRange(2, waktuColIdx + 1, lastRow - 1, 1);
+  const tz = SS.getSpreadsheetTimeZone();
+  const values = range.getValues().map(([v]) => (v instanceof Date) ? Utilities.formatDate(v, tz, "HH:mm") : v);
+  range.setNumberFormat("@").setValues(values.map(v => [v]));
+}
+
+/* Menambahkan kolom baru ke akhir header sheet yang sudah ada, kalau belum ada.
+   Aman dijalankan berkali-kali (idempotent) — dipakai untuk migrasi skema (mis. menambah kolom "waktu"). */
+function ensureColumns_(sheetName, requiredCols){
+  const sh = SS.getSheetByName(sheetName);
+  if (!sh) return;
+  const lastCol = sh.getLastColumn();
+  const headers = lastCol ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  requiredCols.forEach(col => {
+    if (headers.indexOf(col) === -1) {
+      sh.getRange(1, sh.getLastColumn() + 1).setValue(col);
+      headers.push(col);
+    }
+  });
 }
 
 /* ---------------- Router utama ---------------- */
@@ -95,12 +136,16 @@ function jsonOut_(obj){
 function routeGet_(action, params){
   switch(action){
     case "getLandingData": return getLandingData_();
+    case "getRecentLayanan": return getRecentLayanan_();
     case "getSettings": return getAll_(SHEETS.SETTINGS).reduce((o,r)=>(o[r.key]=r.value, o), {});
     case "listWarga": return requireAuth_(params.token) && getAll_(SHEETS.WARGA);
     case "listKas": return requireAuth_(params.token) && getAll_(SHEETS.KAS);
     case "listIuran": return requireAuth_(params.token) && getAll_(SHEETS.IURAN);
     case "listAset": return getAll_(SHEETS.ASET); // publik untuk transparansi
-    case "listLayanan": return requireAuth_(params.token) && getAll_(SHEETS.LAYANAN).filter(r => !params.jenis || r.jenis === params.jenis);
+    case "listLayanan": {
+      const jenisFilter = (params.jenis && params.jenis !== "undefined" && params.jenis !== "null") ? params.jenis : null;
+      return requireAuth_(params.token) && getAll_(SHEETS.LAYANAN).filter(r => !jenisFilter || r.jenis === jenisFilter);
+    }
     case "listAgenda": return getAll_(SHEETS.AGENDA);
     case "listPengumuman": return getAll_(SHEETS.PENGUMUMAN);
     case "listPetugas": return requireAuth_(params.token) && getAll_(SHEETS.PETUGAS).map(({passwordHash, ...rest}) => rest);
@@ -121,7 +166,7 @@ function routePost_(action, body){
     case "toggleIuran": requireAuth_(body.token); return toggleIuran_(body);
     case "saveAset": requireAuth_(body.token); return upsert_(SHEETS.ASET, body.data, body.token);
     case "deleteAset": requireAuth_(body.token); return remove_(SHEETS.ASET, body.id, body.token);
-    case "submitLayanan": return upsert_(SHEETS.LAYANAN, Object.assign({ jenis: body.jenis, status: "Pending" }, body.data), null); // publik
+    case "submitLayanan": return submitLayananWithGuard_(body.jenis, body.data);
     case "updateLayananStatus": requireAuth_(body.token); return upsert_(SHEETS.LAYANAN, { id: body.id, status: body.status, nomorSurat: body.nomorSurat || "" }, body.token);
     case "saveAgenda": requireAuth_(body.token); return upsert_(SHEETS.AGENDA, body.data, body.token);
     case "deleteAgenda": requireAuth_(body.token); return remove_(SHEETS.AGENDA, body.id, body.token);
@@ -145,9 +190,19 @@ function getAll_(name){
   const sh = getSheet_(name);
   const values = sh.getDataRange().getValues();
   const headers = values.shift();
+  const tz = SS.getSpreadsheetTimeZone();
   return values.map(row => {
     const obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
+    headers.forEach((h, i) => {
+      let v = row[i];
+      // Google Sheets kadang otomatis mengubah nilai kolom "waktu" (mis. "12:52") jadi
+      // objek Date/Time internal. Kalau kejadian, ubah kembali jadi teks HH:mm yang benar
+      // (pakai timezone spreadsheet supaya jamnya tidak geser).
+      if (h === "waktu" && v instanceof Date) {
+        v = Utilities.formatDate(v, tz, "HH:mm");
+      }
+      obj[h] = v;
+    });
     return obj;
   }).filter(r => Object.values(r).some(v => v !== "" && v !== null));
 }
@@ -155,6 +210,7 @@ function getAll_(name){
 function upsert_(name, data, token){
   const sh = getSheet_(name);
   const headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const waktuColIdx = headers.indexOf("waktu"); // -1 kalau sheet ini tidak punya kolom waktu
   const values = sh.getDataRange().getValues();
   let rowIndex = -1;
   if (data.id) {
@@ -165,9 +221,19 @@ function upsert_(name, data, token){
     data.createdAt = data.createdAt || new Date();
     const row = headers.map(h => data[h] !== undefined ? data[h] : "");
     sh.appendRow(row);
+    if (waktuColIdx !== -1) {
+      // Format kolom waktu sebagai teks polos SETELAH baris ditambahkan, supaya
+      // Google Sheets tidak otomatis mengubah "12:52" jadi nilai Date/Time internal.
+      const newRow = sh.getLastRow();
+      sh.getRange(newRow, waktuColIdx + 1).setNumberFormat("@").setValue(row[waktuColIdx]);
+    }
   } else {
     headers.forEach((h, i) => {
-      if (data[h] !== undefined) sh.getRange(rowIndex, i+1).setValue(data[h]);
+      if (data[h] !== undefined) {
+        const cell = sh.getRange(rowIndex, i+1);
+        if (h === "waktu") cell.setNumberFormat("@");
+        cell.setValue(data[h]);
+      }
     });
   }
   logAudit_(token, (rowIndex === -1 ? "Tambah" : "Ubah") + " data " + name, data.id);
@@ -272,13 +338,59 @@ function logAudit_(token, aksi, detail){
 }
 
 /* ---------------- Data agregat untuk landing page publik ---------------- */
+function safeGetAll_(name){
+  try { return getAll_(name); }
+  catch (err) { Logger.log("Gagal membaca sheet " + name + ": " + err.message); return []; }
+}
+
+/* Data ringkas pengajuan layanan warga terbaru (untuk slider di halaman publik) */
+function getRecentLayanan_(){
+  const rows = safeGetAll_(SHEETS.LAYANAN);
+  return rows
+    .slice(-15)
+    .reverse()
+    .map(r => ({
+      tanggal: r.createdAt,
+      nama: r.nama || "Anonim",
+      jenis: r.jenis,
+      detail: r.detail || "",
+      status: r.status || "Pending",
+    }));
+}
+
+/* ---------- Validasi Nomor Rumah (format: C[angka]/[angka][angka], contoh: C1/09) ---------- */
+const NAMA_PERUMAHAN_ = "Samawa Village Sepatan";
+const WA_ADMIN_ = "085780318103";
+
+function normalizeNoRumah_(v){
+  return String(v || "").trim().toUpperCase().replace(/\s+/g, "");
+}
+function isValidNoRumahFormat_(v){
+  return /^C\d+\/\d{2}$/.test(normalizeNoRumah_(v));
+}
+function isNoRumahTerdaftar_(v){
+  const target = normalizeNoRumah_(v);
+  const warga = safeGetAll_(SHEETS.WARGA);
+  return warga.some(w => normalizeNoRumah_(w.noRumah) === target);
+}
+function submitLayananWithGuard_(jenis, data){
+  const noRumah = (data && data.noRumah) || "";
+  if (!isValidNoRumahFormat_(noRumah)) {
+    throw new Error("Format nomor rumah tidak valid. Gunakan format seperti C1/09.");
+  }
+  if (!isNoRumahTerdaftar_(noRumah)) {
+    throw new Error("Anda tidak bisa mengisi form karena belum terdaftar sebagai warga blok C perumahan " + NAMA_PERUMAHAN_ + ". Silakan hubungi admin (wa.me/" + WA_ADMIN_ + ") untuk input data Anda.");
+  }
+  return upsert_(SHEETS.LAYANAN, Object.assign({ jenis: jenis, status: "Pending" }, data), null);
+}
+
 function getLandingData_(){
-  const warga = getAll_(SHEETS.WARGA);
-  const kas = getAll_(SHEETS.KAS);
-  const iuran = getAll_(SHEETS.IURAN);
-  const aset = getAll_(SHEETS.ASET);
-  const agenda = getAll_(SHEETS.AGENDA);
-  const pengumuman = getAll_(SHEETS.PENGUMUMAN);
+  const warga = safeGetAll_(SHEETS.WARGA);
+  const kas = safeGetAll_(SHEETS.KAS);
+  const iuran = safeGetAll_(SHEETS.IURAN);
+  const aset = safeGetAll_(SHEETS.ASET);
+  const agenda = safeGetAll_(SHEETS.AGENDA);
+  const pengumuman = safeGetAll_(SHEETS.PENGUMUMAN);
 
   const totalMasuk = kas.filter(k => k.tipe === "masuk").reduce((s,k)=>s+Number(k.jumlah||0),0);
   const totalKeluar = kas.filter(k => k.tipe === "keluar").reduce((s,k)=>s+Number(k.jumlah||0),0);
