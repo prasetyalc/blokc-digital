@@ -29,7 +29,7 @@
 
   --success:#4e9f3d;
   --danger:#c1502e;
-  --info:#229ed4;
+  --info:#28a2c7;
 
   /* ---- Semantic tokens (light) ---- */
   --bg:#f7f5f0;
@@ -72,6 +72,15 @@ html[data-theme="dark"]{
 *,*::before,*::after{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 button, a, .icon-btn, .btn{ -webkit-tap-highlight-color:transparent; }
+/* Dipakai sesaat oleh toggleTheme() di app.js: mematikan SEMUA transisi warna
+   selama satu frame supaya perubahan tema terjadi instan/serentak, bukan
+   "belang-belang" bertahap yang terlihat seperti kedip di HP. */
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after{
+  transition:none !important;
+}
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto;}
   *,*::before,*::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important;}
@@ -137,6 +146,7 @@ html[data-theme="dark"] .btn-primary{background:var(--gold-500); color:#16211f;}
   -webkit-backdrop-filter:blur(14px) saturate(140%);
   border-bottom:1px solid transparent;
   transition:border-color .3s ease, background .3s ease, height .3s ease;
+  transform:translateZ(0); -webkit-transform:translateZ(0); will-change:background;
 }
 .nav.is-scrolled{border-bottom-color:var(--border); height:66px; box-shadow:var(--shadow-sm);}
 .nav .container{display:flex; align-items:center; justify-content:space-between; gap:20px;}
