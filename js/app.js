@@ -160,6 +160,7 @@ const ADMIN_PANELS = {
   aset: { title: "Aset & Inventaris", render: renderAsetPanel },
   layanan: { title: "Layanan & Pengaduan Warga", render: renderLayananPanel },
   agenda: { title: "Agenda & Pengumuman", render: renderAgendaPanel },
+  video: { title: "Momen Kebersamaan Warga (Video)", render: renderVideoPanel },
   petugas: { title: "Petugas & Audit Log", render: renderPetugasPanel },
   pengaturan: { title: "Pengaturan Sistem", render: renderPengaturanPanel },
 };
@@ -861,6 +862,72 @@ async function handleSavePengumuman(e){
   renderAgendaPanel(document.getElementById("adminContent"), "pengumuman");
 }
 
+/* ---------- 16b. MOMEN VIDEO (YouTube) ---------- */
+function extractYoutubeId(url){
+  if (!url) return "";
+  const trimmed = String(url).trim();
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{11})/,
+  ];
+  for (const p of patterns) { const m = trimmed.match(p); if (m) return m[1]; }
+  if (/^[\w-]{11}$/.test(trimmed)) return trimmed; // jaga-jaga kalau admin cuma paste ID-nya saja
+  return "";
+}
+async function renderVideoPanel(el){
+  el.innerHTML = `
+    <div class="toolbar"><div></div><button class="btn btn-primary btn-sm" onclick="openAddModal('modalVideo','Tambah Video Momen Kebersamaan')">+ Tambah Video</button></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Preview</th><th>Judul</th><th>Link</th><th>Aksi</th></tr></thead>
+        <tbody id="videoBody">${emptyRow(4,'⏳','Memuat data...')}</tbody>
+      </table>
+    </div>`;
+  try {
+    const rows = await RTApi.listVideo();
+    window.__videoCache = rows;
+    const body = document.getElementById("videoBody");
+    body.innerHTML = rows.length ? rows.map(r => `
+      <tr>
+        <td><img src="https://img.youtube.com/vi/${r.videoId}/default.jpg" alt="" style="width:64px; height:36px; object-fit:cover; border-radius:6px; display:block;"></td>
+        <td>${r.judul}</td>
+        <td><a href="${r.youtubeUrl}" target="_blank" rel="noopener" style="color:var(--accent);">Buka ↗</a></td>
+        <td class="row-actions">
+          <button class="icon-btn" title="Edit" onclick='editVideo("${r.id}")'>✏️</button>
+          <button class="icon-btn" title="Hapus" onclick="deleteVideo('${r.id}')">🗑️</button>
+        </td>
+      </tr>`).join("") : emptyRow(4,'🎬','Belum ada video. Tambahkan momen kebersamaan warga pertama!');
+  } catch (err) {
+    document.getElementById("videoBody").innerHTML = errorRow(4, err);
+  }
+}
+function findVideo(id){ return (window.__videoCache||[]).find(r => r.id === id); }
+function editVideo(id){
+  const data = findVideo(id);
+  if (!data) return toast("Data tidak ditemukan, muat ulang panel.", "err");
+  openEditModal("modalVideo", data, "Edit Video Momen Kebersamaan");
+}
+async function deleteVideo(id){
+  if (!confirm("Hapus video ini dari slider halaman utama?")) return;
+  try { await RTApi.deleteVideo(id); toast("Video dihapus."); loadAdminPanel("video"); }
+  catch (err){ toast(err.message, "err"); }
+}
+async function handleSaveVideo(e){
+  e.preventDefault();
+  const form = e.target;
+  const msg = form.querySelector(".form-msg");
+  const data = formToObject(form, ["id","judul","youtubeUrl"]);
+  const videoId = extractYoutubeId(data.youtubeUrl);
+  if (!videoId){
+    msg.textContent = "Link YouTube tidak dikenali. Pastikan formatnya benar (youtube.com/watch?v=..., youtu.be/..., atau shorts).";
+    msg.className = "form-msg err show";
+    return;
+  }
+  data.videoId = videoId;
+  const isEdit = !!data.id;
+  if (!isEdit) delete data.id;
+  await submitEntity(form, () => RTApi.saveVideo(data), { successMsg: isEdit ? "Perubahan video tersimpan." : "Video ditambahkan.", modalId: "modalVideo", reloadPanel: "video" });
+}
+
 /* ---------- 17. PETUGAS & AUDIT ---------- */
 async function renderPetugasPanel(el){
   el.innerHTML = `
@@ -1135,5 +1202,50 @@ async function loadLayananSlider(){
   }
 }
 document.addEventListener("DOMContentLoaded", loadLayananSlider);
+
+/* ---------- 21. SLIDER VIDEO: MOMEN KEBERSAMAAN WARGA ---------- */
+async function loadVideoSlider(){
+  const mask = document.getElementById("videoSliderMask");
+  const track = document.getElementById("videoSliderTrack");
+  if (!mask || !track) return;
+  try {
+    const rows = await RTApi.listVideo();
+    if (!rows || !rows.length){
+      document.getElementById("videoSliderWrap").innerHTML = '<p class="layanan-slider-label">🎬 Belum ada video momen kebersamaan warga.</p>';
+      return;
+    }
+    const cardHtml = (r) => `
+      <div class="video-card" data-video-id="${r.videoId}">
+        <div class="video-card-thumb" onmouseenter="playVideoCard(this)" onclick="playVideoCard(this)">
+          <img src="https://img.youtube.com/vi/${r.videoId}/hqdefault.jpg" alt="${r.judul}" loading="lazy">
+          <div class="video-play-btn">▶</div>
+        </div>
+        <div class="video-card-title">${r.judul}</div>
+      </div>`;
+    // Digandakan supaya animasi loop terlihat mulus tanpa jeda
+    track.innerHTML = rows.map(cardHtml).join("") + rows.map(cardHtml).join("");
+    track.style.setProperty("--slide-duration", Math.max(30, rows.length * 8) + "s");
+  } catch (err) {
+    console.warn("Gagal memuat slider video:", err.message);
+    document.getElementById("videoSliderWrap").innerHTML = '<p class="layanan-slider-label">🎬 Video belum dapat dimuat.</p>';
+  }
+}
+function playVideoCard(thumbEl){
+  if (thumbEl.querySelector("iframe")) return; // sudah main, tidak perlu diulang
+  const videoId = thumbEl.closest(".video-card")?.dataset.videoId;
+  if (!videoId) return;
+  thumbEl.innerHTML = `
+    <button class="video-card-close" onclick="event.stopPropagation(); stopVideoCard(this.closest('.video-card-thumb'))" aria-label="Tutup video">✕</button>
+    <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&rel=0&modestbranding=1&playsinline=1"
+      allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  thumbEl.onmouseleave = () => stopVideoCard(thumbEl);
+}
+function stopVideoCard(thumbEl){
+  const videoId = thumbEl.closest(".video-card")?.dataset.videoId;
+  if (!videoId) return;
+  thumbEl.onmouseleave = null;
+  thumbEl.innerHTML = `<img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" alt="" loading="lazy"><div class="video-play-btn">▶</div>`;
+}
+document.addEventListener("DOMContentLoaded", loadVideoSlider);
 
 document.addEventListener("DOMContentLoaded", loadLandingData);
