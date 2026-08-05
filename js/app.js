@@ -18,9 +18,15 @@ document.documentElement.classList.add("js-ready");
 
 function toggleTheme(){
   const html = document.documentElement;
+  // Matikan semua transisi CSS sesaat supaya perubahan warna terjadi instan dalam satu frame —
+  // ini mencegah efek kedip/glitch di HP karena ratusan elemen bertransisi tidak serentak.
+  html.classList.add("theme-switching");
   const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
   html.setAttribute("data-theme", next);
   localStorage.setItem("rt_theme", next);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => html.classList.remove("theme-switching"));
+  });
 }
 
 /* ---------- 2. NAV: shrink on scroll + mobile menu ---------- */
